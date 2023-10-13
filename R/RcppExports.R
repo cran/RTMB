@@ -5,6 +5,14 @@ get_graph <- function(adf) {
     .Call(`_RTMB_get_graph`, adf)
 }
 
+get_df <- function(adf) {
+    .Call(`_RTMB_get_df`, adf)
+}
+
+get_node <- function(adf, node) {
+    invisible(.Call(`_RTMB_get_node`, adf, node))
+}
+
 set_tape_config <- function(comparison = 0L, atomic = 1L, vectorize = 0L) {
     .Call(`_RTMB_set_tape_config`, comparison, atomic, vectorize)
 }
@@ -231,5 +239,9 @@ fft_complex <- function(x, dim, inverse = FALSE) {
 
 TapedEval <- function(F, i) {
     .Call(`_RTMB_TapedEval`, F, i)
+}
+
+LowRankTag <- function(x) {
+    .Call(`_RTMB_LowRankTag`, x)
 }
 

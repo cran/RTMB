@@ -15,6 +15,8 @@ MakeADFun(
   func,
   parameters,
   random = NULL,
+  profile = NULL,
+  integrate = NULL,
   map = list(),
   ADreport = FALSE,
   silent = FALSE,
@@ -39,6 +41,10 @@ checkConsistency(obj, fast = TRUE, ...)
 \item{parameters}{Parameter list (or parameter vector) used by \code{func}.}
 
 \item{random}{As \link[TMB]{MakeADFun}.}
+
+\item{profile}{As \link[TMB]{MakeADFun}.}
+
+\item{integrate}{As \link[TMB]{MakeADFun}.}
 
 \item{map}{As \link[TMB]{MakeADFun}.}
 

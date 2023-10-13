@@ -12,7 +12,7 @@
 
 <meta name="author" content="Kasper Kristensen" />
 
-<meta name="date" content="2023-08-09" />
+<meta name="date" content="2023-10-13" />
 
 <title>Details behind the AD Tape</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Details behind the AD Tape</h1>
 <h4 class="author">Kasper Kristensen</h4>
-<h4 class="date">2023-08-09</h4>
+<h4 class="date">2023-10-13</h4>
 
 
 <div id="TOC">
@@ -404,8 +404,9 @@ outer tape’s scope.</li>
 ##  : R^2 -&gt; R^1</code></pre>
 <p>A number of methods are available for the tape.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>F<span class="sc">$</span><span class="fu">methods</span>()</span></code></pre></div>
-<pre><code>## [1] &quot;jacobian&quot; &quot;simplify&quot; &quot;print&quot;    &quot;jacfun&quot;   &quot;atomic&quot;   &quot;laplace&quot;  &quot;newton&quot;  
-## [8] &quot;graph&quot;</code></pre>
+<pre><code>##  [1] &quot;jacobian&quot;   &quot;simplify&quot;   &quot;print&quot;      &quot;jacfun&quot;     &quot;atomic&quot;    
+##  [6] &quot;laplace&quot;    &quot;newton&quot;     &quot;graph&quot;      &quot;data.frame&quot; &quot;node&quot;      
+## [11] &quot;par&quot;</code></pre>
 <p>These methods are part of the tape object and documented under
 <code>?Tape</code>. We can print the tape using the <code>print</code>
 method:</p>

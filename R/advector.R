@@ -189,10 +189,12 @@ detachADoverloads <- function(enable=TRUE, ...) {
 rep.advector <- function (x, ...) {
     structure(NextMethod(), class="advector")
 }
-##' @describeIn ADvector Equivalent of \link[base]{sum} except \code{na.rm} not allowed.
-sum.advector <- function(x, ..., na.rm) {
-  if (na.rm) stop("'na.rm=TRUE' not implemented for AD sum")
-  Reduce1(x, "+") + sum(...)
+##' @describeIn ADvector Equivalent of \link[base]{sum}. \code{na.rm=TRUE} is allowed, but note that this feature assumes correct propagation of NAs via C-level arithmetic.
+sum.advector <- function(x, ..., na.rm = FALSE) {
+    if (na.rm) {
+        x <- x[!is.na(getValues(x))]
+    }
+    Reduce1(x, "+") + sum(..., na.rm = na.rm)
 }
 ##' @describeIn ADvector Equivalent of \link[base]{prod} except \code{na.rm} not allowed.
 prod.advector <- function(x, ..., na.rm) {
@@ -284,14 +286,16 @@ MakeTape <- function(f, x) {
             dim(x) <- Dim
         x
     }
+    eval <- mod$eval ## cache
+    evalAD <- mod$evalAD ## cache
     structure(
         function(x) {
             if (is.list(x))
                 x <- do.call("c", x)
             if (inherits(x, "advector") && ad_context())
-                output(mod$evalAD(x))
+                output(evalAD(x))
             else
-                output(mod$eval(x))
+                output(eval(x))
         },
         methods = list(
             jacobian = mod$jacobian,
@@ -321,7 +325,16 @@ MakeTape <- function(f, x) {
                 G <- get_graph(.pointer(mod))
                 colnames(G) <- rownames(G) <- sub("Op","",colnames(G))
                 G
-            }
+            },
+            data.frame = function() {
+                get_df(.pointer(mod))
+            },
+            node = function(i) {
+                mod <- .copy(mod)
+                get_node(.pointer(mod), i)
+                .expose(mod)
+            },
+            par = mod$domainvec
         ),
         class="Tape")
 }
@@ -431,6 +444,24 @@ GetTape <- function(obj, name = c("ADFun", "ADGrad", "ADHess"), warn=TRUE) {
             message("'getSetGlobalPtr' not found in 'RTMB'")
             stop("Please update TMB and recompile 'RTMB'")
         }
+        fwrtmb <- .Call((getFramework))
+        fwdll <- .Call(("getFramework"), PACKAGE=ADFun$DLL)
+        if (!identical(fwrtmb, fwdll)) {
+            info <- function(x) c(framework=x, attributes(x))
+            null2na <- function(x) if (is.null(x)) NA else x
+            df1 <- as.data.frame(info(fwrtmb))
+            names(df1) <- names(info(fwrtmb))
+            df2 <- as.data.frame(lapply(info(fwdll)[names(info(fwrtmb))], null2na ))
+            names(df2) <- names(info(fwrtmb))
+            df <- rbind(df1, df2)
+            row.names(df) <- c('RTMB', ADFun$DLL)
+            message("Note: DLL '", ADFun$DLL, "' is not binary compatible with 'RTMB'")
+            print(df)
+            message("- Compile with framework='TMBad'")
+            message("- Compile with openmp=FALSE")
+            message("- Compile with '-DTMBAD_INDEX_TYPE=uint64_t'")
+            stop()
+        }
         getSetGlobalPtr <- get("getSetGlobalPtr", getNamespace("RTMB"))
         RTMBptr <- .Call((getSetGlobalPtr), NULL)
         DLLptr <- .Call(("getSetGlobalPtr"), NULL, PACKAGE=ADFun$DLL)
@@ -452,6 +483,8 @@ data <- NULL
 ##' @param func Function taking a parameter list (or parameter vector) as input.
 ##' @param parameters Parameter list (or parameter vector) used by \code{func}.
 ##' @param random As \link[TMB]{MakeADFun}.
+##' @param profile As \link[TMB]{MakeADFun}.
+##' @param integrate As \link[TMB]{MakeADFun}.
 ##' @param map As \link[TMB]{MakeADFun}.
 ##' @param ADreport As \link[TMB]{MakeADFun}.
 ##' @param silent As \link[TMB]{MakeADFun}.
@@ -466,7 +499,7 @@ data <- NULL
 ##' }
 ##' obj <- MakeADFun(fr, numeric(2), silent=TRUE)
 ##' nlminb(c(-1.2, 1), obj$fn, obj$gr, obj$he)
-MakeADFun <- function(func, parameters, random=NULL, map=list(), ADreport=FALSE, silent=FALSE,...) {
+MakeADFun <- function(func, parameters, random=NULL, profile=NULL, integrate=NULL, map=list(), ADreport=FALSE, silent=FALSE,...) {
     setdata <- NULL
     if (is.list(func)) {
         setdata <- attr(func, "setdata")
@@ -481,14 +514,18 @@ MakeADFun <- function(func, parameters, random=NULL, map=list(), ADreport=FALSE,
         parameters <- structure(list(parameters), names=parnames)
     }
     ## Make empty object
-    obj <- TMB::MakeADFun(data=list(),
-                          parameters=parameters,
-                          random=random,
-                          map=map,
-                          ADreport=FALSE,
-                          checkParameterOrder=FALSE,
-                          silent=silent,
-                          DLL="RTMB")
+    TMBArgs <- list(data=list(),
+                    parameters=parameters,
+                    random=random,
+                    profile=profile,
+                    map=map,
+                    ADreport=FALSE,
+                    checkParameterOrder=FALSE,
+                    silent=silent,
+                    integrate=NULL,
+                    ...)
+    TMBArgs$DLL <- "RTMB" ## Override if included in ...
+    obj <- do.call(TMB::MakeADFun, TMBArgs)
     ## Handling maps (copied and modified parList)
     parList <- function (parameters, par) {
         ans <- parameters
@@ -634,6 +671,8 @@ MakeADFun <- function(func, parameters, random=NULL, map=list(), ADreport=FALSE,
     attr(obj$env$data, "func") <- func
     attr(obj$env$data, "setdata") <- setdata
     obj$env$ADreport <- ADreport
+    obj$env$profile <- profile
+    obj$env$integrate <- integrate
     obj$retape()
     obj$par <- obj$env$par[obj$env$lfixed()]
     obj
@@ -707,3 +746,4 @@ getAll <- function(..., warn=TRUE) {
     }
     invisible(NULL)
 }
+

@@ -60,19 +60,19 @@ F$print()
 ## -----------------------------------------------------------------------------
 F$graph()
 
-## ---- fig.cap="Operator graph of test function"-------------------------------
+## ----fig.cap="Operator graph of test function"--------------------------------
 showGraph(F)
 
 ## -----------------------------------------------------------------------------
 G <- MakeTape(function(x) c( F(x) , F(x) ), numeric(2))
 
-## ---- fig.cap="Operator graph of test function evaluated twice"---------------
+## ----fig.cap="Operator graph of test function evaluated twice"----------------
 showGraph(G)
 
 ## -----------------------------------------------------------------------------
 F <- F$atomic()
 
-## ---- fig.cap="Operator graph of *atomic* test function evaluated twice"------
+## ----fig.cap="Operator graph of *atomic* test function evaluated twice"-------
 G <- MakeTape(function(x) c( F(x) , F(x) ), numeric(2))
 showGraph(G)
 
@@ -84,30 +84,30 @@ F <- MakeTape(function(x) {
     y1+y2
 }, numeric(2))
 
-## ---- fig.cap="Tape of function"----------------------------------------------
+## ----fig.cap="Tape of function"-----------------------------------------------
 showGraph(F)
 
 ## -----------------------------------------------------------------------------
 F$simplify("eliminate")
 
-## ---- fig.cap="Tape of function after eliminate"------------------------------
+## ----fig.cap="Tape of function after eliminate"-------------------------------
 showGraph(F)
 
 ## -----------------------------------------------------------------------------
 F$simplify("optimize")
 
-## ---- fig.cap="Tape of function after optimize"-------------------------------
+## ----fig.cap="Tape of function after optimize"--------------------------------
 showGraph(F)
 
 ## -----------------------------------------------------------------------------
 f <- function(X) X %*% X
 
-## ---- fig.cap="Plain matrix multiply: Expands all operations"-----------------
+## ----fig.cap="Plain matrix multiply: Expands all operations"------------------
 TapeConfig(atomic="disable")
 F <- MakeTape(f, matrix(0, 2, 2))
 showGraph(F)
 
-## ---- fig.cap="Atomic matrix multiply: Collapses to a single operation. The constants are the matrix dimensions which are represented as additional inputs."----
+## ----fig.cap="Atomic matrix multiply: Collapses to a single operation. The constants are the matrix dimensions which are represented as additional inputs."----
 TapeConfig(atomic="enable")
 F <- MakeTape(f, matrix(0, 2, 2))
 showGraph(F)
