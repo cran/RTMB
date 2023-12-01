@@ -2,7 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <Rcpp.h>
-#include "TMB.h"
+#include "RTMB.h"
 
 using namespace Rcpp;
 
@@ -11,6 +11,86 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// SpJacFun
+Rcpp::S4 SpJacFun(Rcpp::XPtr<TMBad::ADFun<> > adf);
+RcppExport SEXP _RTMB_SpJacFun(SEXP adfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    rcpp_result_gen = Rcpp::wrap(SpJacFun(adf));
+    return rcpp_result_gen;
+END_RCPP
+}
+// RangeProj
+void RangeProj(Rcpp::XPtr<TMBad::ADFun<> > adf, Rcpp::IntegerVector i);
+RcppExport SEXP _RTMB_RangeProj(SEXP adfSEXP, SEXP iSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type i(iSEXP);
+    RangeProj(adf, i);
+    return R_NilValue;
+END_RCPP
+}
+// find_op_by_name
+Rcpp::IntegerVector find_op_by_name(Rcpp::XPtr<TMBad::ADFun<> > adf, Rcpp::String name);
+RcppExport SEXP _RTMB_find_op_by_name(SEXP adfSEXP, SEXP nameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    Rcpp::traits::input_parameter< Rcpp::String >::type name(nameSEXP);
+    rcpp_result_gen = Rcpp::wrap(find_op_by_name(adf, name));
+    return rcpp_result_gen;
+END_RCPP
+}
+// op2var
+Rcpp::IntegerVector op2var(Rcpp::XPtr<TMBad::ADFun<> > adf, Rcpp::IntegerVector nodes);
+RcppExport SEXP _RTMB_op2var(SEXP adfSEXP, SEXP nodesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type nodes(nodesSEXP);
+    rcpp_result_gen = Rcpp::wrap(op2var(adf, nodes));
+    return rcpp_result_gen;
+END_RCPP
+}
+// findIndex
+Rcpp::IntegerVector findIndex(Rcpp::XPtr<TMBad::ADFun<> > adf, Rcpp::String name);
+RcppExport SEXP _RTMB_findIndex(SEXP adfSEXP, SEXP nameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    Rcpp::traits::input_parameter< Rcpp::String >::type name(nameSEXP);
+    rcpp_result_gen = Rcpp::wrap(findIndex(adf, name));
+    return rcpp_result_gen;
+END_RCPP
+}
+// setinvIndex
+void setinvIndex(Rcpp::XPtr<TMBad::ADFun<> > adf, Rcpp::IntegerVector index);
+RcppExport SEXP _RTMB_setinvIndex(SEXP adfSEXP, SEXP indexSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type index(indexSEXP);
+    setinvIndex(adf, index);
+    return R_NilValue;
+END_RCPP
+}
+// getinvIndex
+Rcpp::IntegerVector getinvIndex(Rcpp::XPtr<TMBad::ADFun<> > adf);
+RcppExport SEXP _RTMB_getinvIndex(SEXP adfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    rcpp_result_gen = Rcpp::wrap(getinvIndex(adf));
+    return rcpp_result_gen;
+END_RCPP
+}
 // get_graph
 Rcpp::S4 get_graph(Rcpp::XPtr<TMBad::ADFun<> > adf);
 RcppExport SEXP _RTMB_get_graph(SEXP adfSEXP) {
@@ -614,6 +694,71 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ip2D
+Rcpp::XPtr<tmbutils::interpol2D<double> > ip2D(Rcpp::NumericMatrix data, Rcpp::NumericVector x_range, Rcpp::NumericVector y_range, Rcpp::List con);
+RcppExport SEXP _RTMB_ip2D(SEXP dataSEXP, SEXP x_rangeSEXP, SEXP y_rangeSEXP, SEXP conSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x_range(x_rangeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y_range(y_rangeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type con(conSEXP);
+    rcpp_result_gen = Rcpp::wrap(ip2D(data, x_range, y_range, con));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ip2D_eval_num
+Rcpp::NumericVector ip2D_eval_num(Rcpp::XPtr<tmbutils::interpol2D<double> > ptr, Rcpp::NumericVector x, Rcpp::NumericVector y);
+RcppExport SEXP _RTMB_ip2D_eval_num(SEXP ptrSEXP, SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tmbutils::interpol2D<double> > >::type ptr(ptrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(ip2D_eval_num(ptr, x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ip2D_eval_ad
+Rcpp::ComplexVector ip2D_eval_ad(Rcpp::XPtr<tmbutils::interpol2D<double> > ptr, Rcpp::ComplexVector x, Rcpp::ComplexVector y);
+RcppExport SEXP _RTMB_ip2D_eval_ad(SEXP ptrSEXP, SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tmbutils::interpol2D<double> > >::type ptr(ptrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::ComplexVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::ComplexVector >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(ip2D_eval_ad(ptr, x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// splineptr
+Rcpp::XPtr<tmbutils::splinefun<ad> > splineptr(Rcpp::NumericVector x, Rcpp::ComplexVector y, int method);
+RcppExport SEXP _RTMB_splineptr(SEXP xSEXP, SEXP ySEXP, SEXP methodSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::ComplexVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type method(methodSEXP);
+    rcpp_result_gen = Rcpp::wrap(splineptr(x, y, method));
+    return rcpp_result_gen;
+END_RCPP
+}
+// splineptr_eval
+Rcpp::ComplexVector splineptr_eval(Rcpp::XPtr<tmbutils::splinefun<ad> > ptr, Rcpp::NumericVector x);
+RcppExport SEXP _RTMB_splineptr_eval(SEXP ptrSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tmbutils::splinefun<ad> > >::type ptr(ptrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(splineptr_eval(ptr, x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Arith2
 Rcpp::ComplexVector Arith2(const Rcpp::ComplexVector& x, const Rcpp::ComplexVector& y, std::string op);
 RcppExport SEXP _RTMB_Arith2(SEXP xSEXP, SEXP ySEXP, SEXP opSEXP) {
@@ -725,6 +870,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// math_sqrtm
+Rcpp::ComplexMatrix math_sqrtm(SEXP x);
+RcppExport SEXP _RTMB_math_sqrtm(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(math_sqrtm(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// math_absm
+Rcpp::ComplexMatrix math_absm(SEXP x);
+RcppExport SEXP _RTMB_math_absm(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(math_absm(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // expATv
 Rcpp::ComplexMatrix expATv(SEXP AT, Rcpp::ComplexMatrix v, Rcpp::ComplexVector N, Rcpp::List cfg);
 RcppExport SEXP _RTMB_expATv(SEXP ATSEXP, SEXP vSEXP, SEXP NSEXP, SEXP cfgSEXP) {
@@ -775,11 +942,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Term
+SEXP Term(const SEXP x_);
+RcppExport SEXP _RTMB_Term(SEXP x_SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const SEXP >::type x_(x_SEXP);
+    rcpp_result_gen = Rcpp::wrap(Term(x_));
+    return rcpp_result_gen;
+END_RCPP
+}
+// TermsZero
+void TermsZero(Rcpp::XPtr<TMBad::ADFun<> > adf, bool setZero);
+RcppExport SEXP _RTMB_TermsZero(SEXP adfSEXP, SEXP setZeroSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    Rcpp::traits::input_parameter< bool >::type setZero(setZeroSEXP);
+    TermsZero(adf, setZero);
+    return R_NilValue;
+END_RCPP
+}
+// InvPersistent
+void InvPersistent(Rcpp::XPtr<TMBad::ADFun<> > adf, bool setPers);
+RcppExport SEXP _RTMB_InvPersistent(SEXP adfSEXP, SEXP setPersSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    Rcpp::traits::input_parameter< bool >::type setPers(setPersSEXP);
+    InvPersistent(adf, setPers);
+    return R_NilValue;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_mod_adfun();
 
 static const R_CallMethodDef CallEntries[] = {
     TMB_CALLDEFS,
+    {"_RTMB_SpJacFun", (DL_FUNC) &_RTMB_SpJacFun, 1},
+    {"_RTMB_RangeProj", (DL_FUNC) &_RTMB_RangeProj, 2},
+    {"_RTMB_find_op_by_name", (DL_FUNC) &_RTMB_find_op_by_name, 2},
+    {"_RTMB_op2var", (DL_FUNC) &_RTMB_op2var, 2},
+    {"_RTMB_findIndex", (DL_FUNC) &_RTMB_findIndex, 2},
+    {"_RTMB_setinvIndex", (DL_FUNC) &_RTMB_setinvIndex, 2},
+    {"_RTMB_getinvIndex", (DL_FUNC) &_RTMB_getinvIndex, 1},
     {"_RTMB_get_graph", (DL_FUNC) &_RTMB_get_graph, 1},
     {"_RTMB_get_df", (DL_FUNC) &_RTMB_get_df, 1},
     {"_RTMB_get_node", (DL_FUNC) &_RTMB_get_node, 2},
@@ -828,6 +1035,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RTMB_distr_compois_calc_logZ", (DL_FUNC) &_RTMB_distr_compois_calc_logZ, 2},
     {"_RTMB_distr_compois_calc_loglambda", (DL_FUNC) &_RTMB_distr_compois_calc_loglambda, 2},
     {"_RTMB_distr_rcompois", (DL_FUNC) &_RTMB_distr_rcompois, 2},
+    {"_RTMB_ip2D", (DL_FUNC) &_RTMB_ip2D, 4},
+    {"_RTMB_ip2D_eval_num", (DL_FUNC) &_RTMB_ip2D_eval_num, 3},
+    {"_RTMB_ip2D_eval_ad", (DL_FUNC) &_RTMB_ip2D_eval_ad, 3},
+    {"_RTMB_splineptr", (DL_FUNC) &_RTMB_splineptr, 3},
+    {"_RTMB_splineptr_eval", (DL_FUNC) &_RTMB_splineptr_eval, 2},
     {"_RTMB_Arith2", (DL_FUNC) &_RTMB_Arith2, 3},
     {"_RTMB_Math1", (DL_FUNC) &_RTMB_Math1, 2},
     {"_RTMB_Reduce1", (DL_FUNC) &_RTMB_Reduce1, 2},
@@ -837,10 +1049,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RTMB_dgmrf0", (DL_FUNC) &_RTMB_dgmrf0, 3},
     {"_RTMB_SparseArith2", (DL_FUNC) &_RTMB_SparseArith2, 3},
     {"_RTMB_math_expm", (DL_FUNC) &_RTMB_math_expm, 1},
+    {"_RTMB_math_sqrtm", (DL_FUNC) &_RTMB_math_sqrtm, 1},
+    {"_RTMB_math_absm", (DL_FUNC) &_RTMB_math_absm, 1},
     {"_RTMB_expATv", (DL_FUNC) &_RTMB_expATv, 4},
     {"_RTMB_fft_complex", (DL_FUNC) &_RTMB_fft_complex, 3},
     {"_RTMB_TapedEval", (DL_FUNC) &_RTMB_TapedEval, 2},
     {"_RTMB_LowRankTag", (DL_FUNC) &_RTMB_LowRankTag, 1},
+    {"_RTMB_Term", (DL_FUNC) &_RTMB_Term, 1},
+    {"_RTMB_TermsZero", (DL_FUNC) &_RTMB_TermsZero, 2},
+    {"_RTMB_InvPersistent", (DL_FUNC) &_RTMB_InvPersistent, 2},
     {"_rcpp_module_boot_mod_adfun", (DL_FUNC) &_rcpp_module_boot_mod_adfun, 0},
     {NULL, NULL, 0}
 };

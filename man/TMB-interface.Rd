@@ -20,6 +20,7 @@ MakeADFun(
   map = list(),
   ADreport = FALSE,
   silent = FALSE,
+  ridge.correct = FALSE,
   ...
 )
 
@@ -52,6 +53,8 @@ checkConsistency(obj, fast = TRUE, ...)
 
 \item{silent}{As \link[TMB]{MakeADFun}.}
 
+\item{ridge.correct}{Experimental}
+
 \item{...}{Passed to TMB}
 
 \item{obj}{TMB model object (output from \link{MakeADFun})}
@@ -80,8 +83,7 @@ Interface to TMB
 
 \item \code{getAll()}: Can be used to assign all parameter or data objects from a list inside the objective function.
 
-\item \code{OBS()}: Mark the observation
-Mark observation to be used by either \code{oneStepPredict} or by \code{obj$simulate}.
+\item \code{OBS()}: Mark the observation to be used by either \code{oneStepPredict} or by \code{obj$simulate}.
 If your objective function is using an observation \code{x}, you simply need
 to run \code{x <- OBS(x)} \emph{inside the objective function}.
 This will (1) allow \code{oneStepPredict} to change the class of \code{x} to
