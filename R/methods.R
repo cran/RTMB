@@ -15,6 +15,9 @@ setAs("sparseMatrix", "adsparse",
           new("adsparse", x=advector(x@x), i=x@i, p=x@p, Dim=x@Dim)
       })
 
+setAs("advector", "sparseMatrix",
+      function(from) Dense2Sparse(as.matrix(from)) )
+
 ################################################################################
 ## Utilities to reuse methods from the Matrix package
 ################################################################################
@@ -98,7 +101,12 @@ setMethod("Ops",
                   stop("non-conformable arguments")
               SparseArith2(e1, e2, .Generic)
           })
-
+setMethod("Ops",
+          signature("adsparse", "missing"),
+          function(e1, e2) {
+              e1@x[] <- callGeneric(e1@x)
+              e1
+          })
 ##' @describeIn ADmatrix AD matrix multiply
 setMethod("%*%",
           signature("anysparse", "ad"),
@@ -141,6 +149,15 @@ setMethod("tcrossprod", signature("advector"),
 ##' @describeIn ADmatrix AD matrix multiply
 setMethod( "crossprod", signature("advector"),
           function(x, y=NULL) {if (is.null(y)) y <- x; t(x) %*% y} )
+##' @describeIn ADmatrix AD matrix cov2cor
+##' @param V Covariance matrix
+setMethod( "cov2cor", signature("advector"),
+          function(V) {
+              oldval <- TapeConfig()["comparison"]
+              on.exit(TapeConfig(comparison=oldval))
+              TapeConfig(comparison="allow")
+              stats::cov2cor(V)
+          })
 ##' @describeIn ADmatrix AD matrix inversion and solve
 ##' @param a matrix
 ##' @param b matrix, vector or missing
@@ -225,6 +242,25 @@ setMethod("dnorm", "simref", function(x, mean, sd, log) {
     dGenericSim(.Generic, x=x, mean=mean, sd=sd, log=log)
 })
 
+##' @describeIn Distributions AD implementation of \link[stats]{dlnorm}.
+##' @param meanlog Parameter; Mean on log scale.
+##' @param sdlog Parameter; SD on log scale.
+setMethod("dlnorm", "ANY", function (x, meanlog, sdlog, log) {
+    y <- log(x)
+    ans <- dnorm(y, meanlog, sdlog, log=TRUE) - y
+    ans <- ans[] ## if 'simref' do complete simulation
+    if (log) ans else exp(ans)
+})
+##' @describeIn Distributions OSA implementation.
+setMethod("dlnorm", "osa", function (x, meanlog, sdlog, log) {
+    dGenericOSA(.Generic, x=x, meanlog=meanlog, sdlog=sdlog, log=log)
+})
+##' @describeIn Distributions Default method.
+setMethod("dlnorm", signature("num", "num.", "num.", "logical."),
+          function(x, meanlog, sdlog, log) {
+              stats::dlnorm(x, meanlog, sdlog, log)
+          })
+
 ##' @describeIn Distributions Minimal AD implementation of \link[stats]{plogis}
 setMethod("plogis", c("advector", "missing", "missing", "missing", "missing"),
           function(q) 1 / (1 + exp(-q) ) )
@@ -261,6 +297,14 @@ setMethod("matrix", signature(data="advector"),
               ans <- callNextMethod()
               asS4(structure(ans, class="advector"))
           })
+##' @describeIn ADconstruct Equivalent of \link[base]{matrix}
+setMethod("matrix", signature(data="num."),
+          function(data, nrow, ncol, byrow, dimnames) {
+              ans <- callNextMethod()
+              if (ad_context())
+                  ans <- advector(ans)
+              ans
+          })
 ##' @describeIn ADapply As \link[base]{apply}
 ##' @param X As \link[base]{apply}
 ##' @param MARGIN As \link[base]{apply}
@@ -277,11 +321,16 @@ setMethod("apply", signature(X="advector"),
 ##' @describeIn ADapply As \link[base]{sapply}
 ##' @param simplify As \link[base]{sapply}
 ##' @param USE.NAMES As \link[base]{sapply}
-setMethod("sapply", signature(X="advector"),
+setMethod("sapply", signature(X="ANY"),
           function (X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE) {
-              ans <- callNextMethod()
-              if (is.complex(ans))
-                  class(ans) <- "advector"
+              ans <- base::sapply(X, FUN, ..., simplify = FALSE, USE.NAMES = TRUE)
+              ## Adapted from 'base::sapply':
+              if (!isFALSE(simplify)) {
+                  cl <- class(ans[[1L]])
+                  ans <- simplify2array(ans, higher = (simplify == "array"))
+                  if (identical(cl, "advector")) ## FIXME: Test all elements
+                      class(ans) <- cl
+              }
               ans
           })
 
@@ -422,3 +471,19 @@ setMethod("dmultinom", "simref", function(x, size, prob, log) {
     x[] <- stats::rmultinom(nrep, size=size, prob=prob)
     rep(0, nrep)
 })
+## To prevent unintendend usage, we change the default method.
+InvalidMethod <- function(which=-2) {
+    fr <- sys.frame(which)
+    cl <- match.call(sys.function(which), sys.call(which), FALSE)
+    cls <- sapply(names(cl[-1]), function(nm)class(get(nm, envir=fr)))
+    cl[-1] <- cls
+    c("Unexpected combination of classes used in AD context:\n", deparse(cl))
+}
+##' @describeIn Distributions Default implementation that checks for invalid usage.
+setMethod("dmultinom", signature("ANY", "ANY", "ANY", "ANY"),
+          function (x, size, prob, log) {
+              if (ad_context()) {
+                  stop(InvalidMethod())
+              }
+              stats::dmultinom(x=x, size=size, prob=prob, log=log)
+          })

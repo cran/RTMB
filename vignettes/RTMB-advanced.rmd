@@ -226,10 +226,47 @@ showGraph(F)
 
 In contrast to `MakeTape`, we note that `MakeADFun` automatically calls `F$simplify("optimize")` for all tapes.
 
-## Tape transformations:
-- Tape eliminate vs optimize
-- jacfun(), Laplace(), SPA option
-- atomic()
+## Sparse Jacobians
+
+We've seen how the `jacobian()` method evaluates the jacobian of a tape.
+An alternative `jacfun()` exists to return the jacobian as a new tape.
+
+For example, consider a tape of the `diff` operator:
+
+```{r}
+D <- MakeTape(diff, numeric(5))
+D
+```
+
+The jacobian tape is obtained by
+
+```{r}
+J <- D$jacfun()
+J
+```
+
+And can be evaluated as
+
+
+```{r}
+J(1:5)
+```
+
+To get the sparse jacobian do instead:
+
+```{r}
+Js <- D$jacfun(sparse=TRUE)
+Js
+```
+
+Compared to `J`, the tape `Js` only calculates the non-zero elements
+stored as a sparse matrix.
+
+```{r}
+Js(1:5)
+```
+
+Note that both `J` and `Js` can be applied to construct new tapes.
 
 ## Tape configuration
 - Understand plain vs atomic matrix multiply
@@ -376,7 +413,7 @@ To approximate the (negative log) density we
 
 1. Build a tape of the *saddle point adjusted* inner problem
 2. Create new tape by integrating all parameters out using `laplace` with `SPA=TRUE`.
-3. Evaluate the new tape for the remaining (empty) parameter vector. The construct `rep(muX,0)` creates such an empty vector *of the same class as* `muX`.
+3. Evaluate the new tape for the remaining (empty) parameter vector.
 
 ```{r}
 nldens <- function(obs, muX, muN) {
@@ -389,7 +426,7 @@ nldens <- function(obs, muX, muN) {
     ## 2
     L <- F$laplace(1:length(obs), SPA=TRUE)
     ## 3
-    L(rep(muX,0))
+    L(numeric(0))
 }
 ```
 
@@ -403,3 +440,46 @@ sdreport(obj)
 ```
 
 We note that this approach only works for non-zero observations. However, it should be easy to modify `nldens` to handle zero observations as a special case.
+
+## Complex numbers and AD
+
+RTMB tapes cannot be directly evaluated or constructed using complex numbers. However, it is possible to use intermediate calculations with complex numbers. The convertion function `as.complex` is used for that. The supported complex number operations are documented under `?ADcomplex`.
+
+An example could be an R function using the complex exponential. For it to be applicable with RTMB it must take normal real input and output:
+
+```{r}
+f <- function(x) {
+    ## Get real/imag part
+    xreal <- x[1]
+    ximag <- x[2]
+    ## Construct AD complex number
+    z <- as.complex(xreal) + 1i * as.complex(ximag)
+    ## Return real numbers
+    Mod(exp(z))
+}
+```
+
+We can tape it
+
+```{r}
+F <- MakeTape(f, numeric(2))
+F
+```
+
+and check that it gives the correct result:
+
+```{r}
+## Using R complex arithmetic
+f(1:2)
+```
+
+```{r}
+## Using the tape representation
+F(1:2)
+```
+
+We can verify that the complex operations have been translated into real operations:
+
+```{r}
+F$print()
+```

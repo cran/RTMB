@@ -1,3 +1,5 @@
+#define TMB_PRECOMPILE
+#include "TMB.h"
 #include "RTMB.h"
 
 Rcomplex ad2cplx(const ad &x) {
@@ -47,10 +49,9 @@ bool ad_context() {
   return TMBad::get_glob() != NULL;
 }
 
-// [[Rcpp::export]]
 Rcpp::ComplexVector& as_advector(Rcpp::ComplexVector &x) {
-  x = Rf_asS4(x, TRUE, FALSE); // Was: SET_S4_OBJECT(x);
   x.attr("class") = "advector";
+  SET_S4_OBJECT(x);
   return x;
 }
 
@@ -63,8 +64,8 @@ Rcpp::ComplexMatrix MatrixOutput(const matrix<ad> &X) {
   MapMatrix Z((ad*) z.begin(), z.nrow(), z.ncol());
   Z = X;
   // FIXME: z = as_advector(z);
-  z = Rf_asS4(z, TRUE, FALSE); // Was: SET_S4_OBJECT(z);
   z.attr("class") = "advector";
+  SET_S4_OBJECT(z);
   return z;
 }
 
@@ -108,3 +109,4 @@ ad ScalarInput(SEXP x_) {
   return cplx2ad(x[0]);
 }
 
+#include "rtmb_set_shared_pointers.cpp"

@@ -11,6 +11,38 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// valid
+bool valid(Rcpp::ComplexVector x);
+RcppExport SEXP _RTMB_valid(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::ComplexVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(valid(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ad_context
+bool ad_context();
+RcppExport SEXP _RTMB_ad_context() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(ad_context());
+    return rcpp_result_gen;
+END_RCPP
+}
+// as_advector
+Rcpp::ComplexVector& as_advector(Rcpp::ComplexVector& x);
+RcppExport SEXP _RTMB_as_advector(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::ComplexVector& >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(as_advector(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // SpJacFun
 Rcpp::S4 SpJacFun(Rcpp::XPtr<TMBad::ADFun<> > adf);
 RcppExport SEXP _RTMB_SpJacFun(SEXP adfSEXP) {
@@ -137,6 +169,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_tape_config
+Rcpp::List get_tape_config();
+RcppExport SEXP _RTMB_get_tape_config() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(get_tape_config());
+    return rcpp_result_gen;
+END_RCPP
+}
 // compare_allow
 bool compare_allow();
 RcppExport SEXP _RTMB_compare_allow() {
@@ -144,27 +186,6 @@ BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     rcpp_result_gen = Rcpp::wrap(compare_allow());
-    return rcpp_result_gen;
-END_RCPP
-}
-// valid
-bool valid(Rcpp::ComplexVector x);
-RcppExport SEXP _RTMB_valid(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::ComplexVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(valid(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ad_context
-bool ad_context();
-RcppExport SEXP _RTMB_ad_context() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(ad_context());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -231,6 +252,28 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::ComplexVector& >::type x(xSEXP);
     dbgprint(x);
     return R_NilValue;
+END_RCPP
+}
+// ptr_getx
+Rcpp::XPtr<double> ptr_getx(Rcpp::XPtr<TMBad::ADFun<> > adf);
+RcppExport SEXP _RTMB_ptr_getx(SEXP adfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    rcpp_result_gen = Rcpp::wrap(ptr_getx(adf));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ptr_gety
+Rcpp::XPtr<double> ptr_gety(Rcpp::XPtr<TMBad::ADFun<> > adf);
+RcppExport SEXP _RTMB_ptr_gety(SEXP adfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<TMBad::ADFun<> > >::type adf(adfSEXP);
+    rcpp_result_gen = Rcpp::wrap(ptr_gety(adf));
+    return rcpp_result_gen;
 END_RCPP
 }
 // distr_dexp
@@ -859,6 +902,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Dense2Sparse
+SEXP Dense2Sparse(Rcpp::ComplexMatrix x);
+RcppExport SEXP _RTMB_Dense2Sparse(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::ComplexMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(Dense2Sparse(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // math_expm
 Rcpp::ComplexMatrix math_expm(SEXP x);
 RcppExport SEXP _RTMB_math_expm(SEXP xSEXP) {
@@ -980,6 +1034,9 @@ RcppExport SEXP _rcpp_module_boot_mod_adfun();
 
 static const R_CallMethodDef CallEntries[] = {
     TMB_CALLDEFS,
+    {"_RTMB_valid", (DL_FUNC) &_RTMB_valid, 1},
+    {"_RTMB_ad_context", (DL_FUNC) &_RTMB_ad_context, 0},
+    {"_RTMB_as_advector", (DL_FUNC) &_RTMB_as_advector, 1},
     {"_RTMB_SpJacFun", (DL_FUNC) &_RTMB_SpJacFun, 1},
     {"_RTMB_RangeProj", (DL_FUNC) &_RTMB_RangeProj, 2},
     {"_RTMB_find_op_by_name", (DL_FUNC) &_RTMB_find_op_by_name, 2},
@@ -991,15 +1048,16 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RTMB_get_df", (DL_FUNC) &_RTMB_get_df, 1},
     {"_RTMB_get_node", (DL_FUNC) &_RTMB_get_node, 2},
     {"_RTMB_set_tape_config", (DL_FUNC) &_RTMB_set_tape_config, 3},
+    {"_RTMB_get_tape_config", (DL_FUNC) &_RTMB_get_tape_config, 0},
     {"_RTMB_compare_allow", (DL_FUNC) &_RTMB_compare_allow, 0},
-    {"_RTMB_valid", (DL_FUNC) &_RTMB_valid, 1},
-    {"_RTMB_ad_context", (DL_FUNC) &_RTMB_ad_context, 0},
     {"_RTMB_advec", (DL_FUNC) &_RTMB_advec, 1},
     {"_RTMB_dependent", (DL_FUNC) &_RTMB_dependent, 1},
     {"_RTMB_independent", (DL_FUNC) &_RTMB_independent, 1},
     {"_RTMB_getValues", (DL_FUNC) &_RTMB_getValues, 1},
     {"_RTMB_getVariables", (DL_FUNC) &_RTMB_getVariables, 1},
     {"_RTMB_dbgprint", (DL_FUNC) &_RTMB_dbgprint, 1},
+    {"_RTMB_ptr_getx", (DL_FUNC) &_RTMB_ptr_getx, 1},
+    {"_RTMB_ptr_gety", (DL_FUNC) &_RTMB_ptr_gety, 1},
     {"_RTMB_distr_dexp", (DL_FUNC) &_RTMB_distr_dexp, 3},
     {"_RTMB_distr_dweibull", (DL_FUNC) &_RTMB_distr_dweibull, 4},
     {"_RTMB_distr_dbinom", (DL_FUNC) &_RTMB_distr_dbinom, 4},
@@ -1048,6 +1106,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RTMB_dmvnorm0", (DL_FUNC) &_RTMB_dmvnorm0, 4},
     {"_RTMB_dgmrf0", (DL_FUNC) &_RTMB_dgmrf0, 3},
     {"_RTMB_SparseArith2", (DL_FUNC) &_RTMB_SparseArith2, 3},
+    {"_RTMB_Dense2Sparse", (DL_FUNC) &_RTMB_Dense2Sparse, 1},
     {"_RTMB_math_expm", (DL_FUNC) &_RTMB_math_expm, 1},
     {"_RTMB_math_sqrtm", (DL_FUNC) &_RTMB_math_sqrtm, 1},
     {"_RTMB_math_absm", (DL_FUNC) &_RTMB_math_absm, 1},
@@ -1065,5 +1124,5 @@ static const R_CallMethodDef CallEntries[] = {
 RcppExport void R_init_RTMB(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
-    TMB_CCALLABLES("RTMB");
+    RTMB_CCALLABLES;
 }

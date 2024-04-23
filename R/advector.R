@@ -54,31 +54,20 @@ magic <- function(x, condition = ad_context()) {
             e2 <- e1; e1 <- 0
         }
     }
-    ans <- Arith2(advector(e1),
-                  advector(e2),
-                  .Generic)
-    ## Object determining attrib of result
-    e <- if (length(e2) > length(e1) || length(e2) == 0)
-             e2
-         else
-             e1
-    a <- attributes(e)
-    if (!is.null(a)) {
-        a$class <- "advector"
-        attributes(ans) <- a
-    }
-    ans
+    Arith2(advector(e1),
+           advector(e2),
+           .Generic)
 }
 ##' @describeIn ADvector Unary operations
 "Math.advector" <- function(x, ...) {
-    x[] <- Math1(x, .Generic)
-    x
+    Math1(x, .Generic)
 }
 
 ##' @describeIn ADvector Makes \code{array(x)} work.
 as.vector.advector <- function(x, mode = "any") {
-    ## FIXME: Rcpp export 'as_advector' and use it
-    asS4(structure(NextMethod(), class="advector"))
+    ans <- NextMethod()
+    if (is.list(ans)) lapply(ans, as_advector)
+    else as_advector(ans)
 }
 
 ##' @describeIn ADvector Convert to \link{ADcomplex}. Note that dimensions are dropped for consistency with base R.
@@ -94,16 +83,16 @@ as.complex.advector <- function(x, ...) {
 
 ##' @describeIn ADvector Equivalent of \link[base]{aperm}
 aperm.advector <- function(a, perm, ...) {
-    asS4(structure(NextMethod(), class="advector"))
+    as_advector(NextMethod())
 }
 ##' @describeIn ADvector Equivalent of \link[base]{c}. However note the limitation for mixed types: If `x` is an AD type, `c(x,1)` works while `c(1,x)` does not!
 c.advector <- function(...) {
     ans <- unlist(lapply(list(...), advector))
-    asS4(structure(ans, class = "advector"))
+    as_advector(ans)
 }
 ##' @describeIn ADvector Equivalent of \link[base]{[}
 "[.advector" <- function(x, ...) {
-    asS4(structure(NextMethod(), class="advector"))
+    as_advector(NextMethod())
 }
 
 ## Extra RTMB overloads
@@ -130,7 +119,7 @@ xtra <- local({
         args <- list(...)
         if (any(unlist(lapply(args, inherits, "advector")))) {
             args <- lapply(args, advector)
-            ans <- structure(unlist(args), class="advector")
+            ans <- as_advector(unlist(args))
             return(ans)
         }
         base::"c" (...)
@@ -171,7 +160,7 @@ attachADoverloads <- function() {
 }
 detachADoverloads <- function(enable=TRUE, ...) {
     attached <- ( "AD-overloads" %in% search() )
-    if (attached)
+    if (attached && !ad_context())
         base::detach("AD-overloads")
     NULL
 }
@@ -183,11 +172,11 @@ detachADoverloads <- function(enable=TRUE, ...) {
 }
 ##' @describeIn ADvector Equivalent of \link[base]{[[}
 "[[.advector" <- function(x, ...) {
-    asS4(structure(NextMethod(), class="advector"))
+    as_advector(NextMethod())
 }
 ##' @describeIn ADvector Equivalent of \link[base]{rep}. Makes \code{outer(x,x,...)} work.
 rep.advector <- function (x, ...) {
-    structure(NextMethod(), class="advector")
+    as_advector(NextMethod())
 }
 ##' @describeIn ADvector Equivalent of \link[base]{sum}. \code{na.rm=TRUE} is allowed, but note that this feature assumes correct propagation of NAs via C-level arithmetic.
 sum.advector <- function(x, ..., na.rm = FALSE) {
@@ -195,6 +184,11 @@ sum.advector <- function(x, ..., na.rm = FALSE) {
         x <- x[!is.na(getValues(x))]
     }
     Reduce1(x, "+") + sum(..., na.rm = na.rm)
+}
+##' @describeIn ADvector Equivalent of \link[base]{mean} except no arguments beyond `x` are supported.
+mean.advector <- function(x, ...) {
+    if (length(list(...))) stop("AD mean only works for single argument")
+    sum(x) / length(x)
 }
 ##' @describeIn ADvector Equivalent of \link[base]{prod} except \code{na.rm} not allowed.
 prod.advector <- function(x, ..., na.rm) {
@@ -204,6 +198,12 @@ prod.advector <- function(x, ..., na.rm) {
 ## Make cov2cor() work. FIXME: Any unwanted side-effects with this?
 ##' @describeIn ADvector Makes \code{cov2cor()} work. FIXME: Any unwanted side-effects with this?
 is.numeric.advector <- function(x) TRUE
+##' @describeIn ADvector Makes \code{as.numeric()} work.
+as.double.advector <- function(x, ...) {
+    ## Clear all attributes except class and preserve S4 bit
+    attributes(x) <- attributes(x)["class"]
+    x
+}
 ##' @describeIn ADvector \link{Complex} operations are not allowed and will throw an error.
 ##' @param z Complex (not allowed)
 Complex.advector <- function(z)
@@ -267,8 +267,18 @@ print.advector <- function (x, ...)  {
         x <- activate(x)
     }
     y <- f(x)
+    ## Result might be sparse matrix => Store pattern as an attribute
+    Pattern <- NULL
+    if (inherits(y, "adsparse")) {
+        Pattern <- new("ngCMatrix", i=y@i, p=y@p, Dim=y@Dim)
+        y <- y@x
+    }
     y <- advector(y)
     dependent(y)
+    if (is.null(Pattern))
+        attr(F, "Dim") <- dim(y)
+    else
+        attr(F, "Pattern") <- Pattern
     F
 }
 ## High level version: Not everything available
@@ -280,8 +290,8 @@ MakeTape <- function(f, x) {
     .expose(mod)
 }
 .expose <- function(mod) {
-    Dim <- NULL
-    Pattern <- NULL
+    Dim <- attr(mod, "Dim")
+    Pattern <- attr(mod, "Pattern")
     output <- function(x) {
         if (!is.null(Dim))
             dim(x) <- Dim
@@ -299,10 +309,15 @@ MakeTape <- function(f, x) {
         function(x) {
             if (is.list(x))
                 x <- do.call("c", x)
-            if (inherits(x, "advector") && ad_context())
+            if (ad_context()) {
+                ## Note: Tape might contain references to an outer
+                ## context (and we have no way to know), so we must
+                ## choose AD evaluation regardless of class(x).
+                x <- advector(x)
                 output(evalAD(x))
-            else
+            } else {
                 output(eval(x))
+            }
         },
         methods = list(
             jacobian = mod$jacobian,
@@ -315,7 +330,7 @@ MakeTape <- function(f, x) {
                 else
                     stop("Unknown method")
             },
-            print = mod$print,
+            print = function(depth=0) mod$print(as.integer(depth)),
             jacfun = function(sparse=FALSE) {
                 if (!sparse)
                     .jacfun(mod)
@@ -427,12 +442,15 @@ print.Tape <- function(x,...){
 ##' @param comparison Set behaviour of AD comparison (\code{">"},\code{"=="}, etc).
 ##' @param atomic Set behaviour of AD BLAS operations (notably matrix multiply).
 ##' @param vectorize Enable/disable AD vectorized 'Ops' and 'Math'.
-TapeConfig <- function(comparison = c("forbid", "tape", "allow"),
-                       atomic = c("enable", "disable"),
-                       vectorize = c("disable", "enable")) {
-    comparison <- c(forbid=0L, tape=1L, allow=2L)[match.arg(comparison)]
-    atomic <- c(enable=1L, disable=0L)[match.arg(atomic)]
-    vectorize <- c(enable=1L, disable=0L)[match.arg(vectorize)]
+TapeConfig <- function(comparison = c("NA", "forbid", "tape", "allow"),
+                       atomic = c("NA", "enable", "disable"),
+                       vectorize = c("NA", "disable", "enable")) {
+    if (missing(comparison) || !is.integer(comparison))
+        comparison <- c("NA"=-1L, forbid=0L, tape=1L, allow=2L)[match.arg(comparison)]
+    if (missing(atomic) || !is.integer(atomic))
+        atomic <- c("NA"=-1L, enable=1L, disable=0L)[match.arg(atomic)]
+    if (missing(vectorize) || !is.integer(vectorize))
+        vectorize <- c("NA"=-1L, enable=1L, disable=0L)[match.arg(vectorize)]
     ans <- unlist(set_tape_config(comparison, atomic, vectorize))
     invisible(ans)
 }
@@ -512,6 +530,7 @@ data <- NULL
 ##' @param random As \link[TMB]{MakeADFun}.
 ##' @param profile As \link[TMB]{MakeADFun}.
 ##' @param integrate As \link[TMB]{MakeADFun}.
+##' @param intern As \link[TMB]{MakeADFun}.
 ##' @param map As \link[TMB]{MakeADFun}.
 ##' @param ADreport As \link[TMB]{MakeADFun}.
 ##' @param silent As \link[TMB]{MakeADFun}.
@@ -527,7 +546,7 @@ data <- NULL
 ##' }
 ##' obj <- MakeADFun(fr, numeric(2), silent=TRUE)
 ##' nlminb(c(-1.2, 1), obj$fn, obj$gr, obj$he)
-MakeADFun <- function(func, parameters, random=NULL, profile=NULL, integrate=NULL, map=list(), ADreport=FALSE, silent=FALSE, ridge.correct=FALSE, ...) {
+MakeADFun <- function(func, parameters, random=NULL, profile=NULL, integrate=NULL, intern=FALSE, map=list(), ADreport=FALSE, silent=FALSE, ridge.correct=FALSE, ...) {
     setdata <- NULL
     if (is.list(func)) {
         setdata <- attr(func, "setdata")
@@ -551,6 +570,7 @@ MakeADFun <- function(func, parameters, random=NULL, profile=NULL, integrate=NUL
                     checkParameterOrder=FALSE,
                     silent=silent,
                     integrate=NULL,
+                    intern=FALSE,
                     ...)
     TMBArgs$DLL <- "RTMB" ## Override if included in ...
     obj <- do.call(TMB::MakeADFun, TMBArgs)
@@ -706,6 +726,7 @@ MakeADFun <- function(func, parameters, random=NULL, profile=NULL, integrate=NUL
     obj$env$ADreport <- ADreport
     obj$env$profile <- profile
     obj$env$integrate <- integrate
+    obj$env$intern <- intern
     obj$retape()
     obj$par <- obj$env$par[obj$env$lfixed()]
     if (ridge.correct) {
@@ -776,12 +797,18 @@ getAll <- function(..., warn=TRUE) {
     nm <- names(x)
     if (is.null(nm) || any(nm==""))
         stop("'getAll' is for *named* lists only")
+    anyADvars <- FALSE ## For warn=TRUE case
     for (i in seq_along(x)) {
         if (warn) {
             if (!is.null(fr[[nm[i]]]))
                 warning("Object '", nm[i], "' already defined")
+            anyADvars <- anyADvars || inherits(x[[i]], "advector")
         }
         fr[[nm[i]]] <- x[[i]]
+    }
+    if (warn) {
+        if (ad_context() && !anyADvars)
+            warning("No active parameters found")
     }
     invisible(NULL)
 }

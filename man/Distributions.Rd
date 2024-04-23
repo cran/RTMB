@@ -83,6 +83,9 @@
 \alias{dnorm,num,num.,num.,logical.-method}
 \alias{dnorm,osa,ANY,ANY,ANY-method}
 \alias{dnorm,simref,ANY,ANY,ANY-method}
+\alias{dlnorm,ANY,ANY,ANY,ANY-method}
+\alias{dlnorm,osa,ANY,ANY,ANY-method}
+\alias{dlnorm,num,num.,num.,logical.-method}
 \alias{plogis,advector,missing,missing,missing,missing-method}
 \alias{qlogis,advector,missing,missing,missing,missing-method}
 \alias{dcompois}
@@ -93,6 +96,7 @@
 \alias{dmultinom,num,num.,num,logical.-method}
 \alias{dmultinom,osa,ANY,ANY,ANY-method}
 \alias{dmultinom,simref,ANY,ANY,ANY-method}
+\alias{dmultinom,ANY,ANY,ANY,ANY-method}
 \title{Distributions and special functions for which AD is implemented}
 \usage{
 \S4method{dexp}{ad,ad.,logical.}(x, rate = 1, log = FALSE)
@@ -257,6 +261,12 @@ dlgamma(x, shape, scale, log)
 
 \S4method{dnorm}{simref,ANY,ANY,ANY}(x, mean = 0, sd = 1, log = FALSE)
 
+\S4method{dlnorm}{ANY,ANY,ANY,ANY}(x, meanlog = 0, sdlog = 1, log = FALSE)
+
+\S4method{dlnorm}{osa,ANY,ANY,ANY}(x, meanlog = 0, sdlog = 1, log = FALSE)
+
+\S4method{dlnorm}{num,num.,num.,logical.}(x, meanlog = 0, sdlog = 1, log = FALSE)
+
 \S4method{plogis}{advector,missing,missing,missing,missing}(q)
 
 \S4method{qlogis}{advector,missing,missing,missing,missing}(p)
@@ -276,6 +286,8 @@ dcompois2(x, mean, nu, log = FALSE)
 \S4method{dmultinom}{osa,ANY,ANY,ANY}(x, size = NULL, prob, log = FALSE)
 
 \S4method{dmultinom}{simref,ANY,ANY,ANY}(x, size = NULL, prob, log = FALSE)
+
+\S4method{dmultinom}{ANY,ANY,ANY,ANY}(x, size = NULL, prob, log = FALSE)
 }
 \arguments{
 \item{x}{observation vector}
@@ -333,6 +345,10 @@ dcompois2(x, mean, nu, log = FALSE)
 \item{log_mu}{parameter}
 
 \item{log_var_minus_mu}{parameter}
+
+\item{meanlog}{Parameter; Mean on log scale.}
+
+\item{sdlog}{Parameter; SD on log scale.}
 
 \item{mode}{parameter}
 }
@@ -602,6 +618,12 @@ which documentation should be looked up online.
 
 \item \code{dnorm(x = simref, mean = ANY, sd = ANY, log = ANY)}: Simulation implementation. Modifies \code{x} and returns zero.
 
+\item \code{dlnorm(x = ANY, meanlog = ANY, sdlog = ANY, log = ANY)}: AD implementation of \link[stats]{dlnorm}.
+
+\item \code{dlnorm(x = osa, meanlog = ANY, sdlog = ANY, log = ANY)}: OSA implementation.
+
+\item \code{dlnorm(x = num, meanlog = num., sdlog = num., log = logical.)}: Default method.
+
 \item \code{plogis(
   q = advector,
   location = missing,
@@ -633,6 +655,8 @@ which documentation should be looked up online.
 \item \code{dmultinom(x = osa, size = ANY, prob = ANY, log = ANY)}: OSA implementation
 
 \item \code{dmultinom(x = simref, size = ANY, prob = ANY, log = ANY)}: Simulation implementation. Modifies \code{x} and returns zero.
+
+\item \code{dmultinom(x = ANY, size = ANY, prob = ANY, log = ANY)}: Default implementation that checks for invalid usage.
 
 }}
 \examples{

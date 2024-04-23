@@ -33,3 +33,53 @@ f2 <- MakeTape(function(p){
     sum(nll[!is.na(obs)])
 }, 0)
 expect_identical(f1(1.234), f2(1.234), info="NA propagation on the tape")
+
+################################################################################
+## (GH issue 17)
+################################################################################
+
+expect_silent(
+MakeTape(function(x) {
+    y <- numeric(3)
+    f <- MakeTape(sin, 1:10)
+    y[1] <- x[1] ## Error here is side-effect of previous line
+    y
+}, 1:10)
+)
+
+################################################################################
+## (GH issue 18)
+################################################################################
+
+F <- MakeTape(function(x) {
+    G <- MakeTape(function(y) y*x, numeric(5))
+    G(1:5)
+}, numeric(5))
+expect_equal(F(1:5), (1:5)^2, info="https://github.com/kaskr/RTMB/issues/18")
+
+################################################################################
+## (GH issue 20)
+################################################################################
+
+F <- MakeTape(function(x) {
+    as.numeric(x)
+}, numeric(3))
+expect_equal(F(1:3), 1:3, info="https://github.com/kaskr/RTMB/issues/20")
+
+################################################################################
+## Tape keeps attributes
+################################################################################
+
+F <- MakeTape(function(x) x * diag(2), 1) ## : R^1 -> R^4
+expect_identical(dim(F(1)), c(2L, 2L),
+                 "Tape keeps matrix output")
+F <- MakeTape(F, 1)
+expect_identical(dim(F(1)), c(2L, 2L),
+                 "Re-playing tape keeps matrix output")
+I <- Matrix::.symDiagonal(2)
+F <- MakeTape(function(x) x * I , 1)      ## : R^1 -> R^2
+expect_true(is(F(1), "sparseMatrix"),
+            "Tape keeps sparse matrix output")
+F <- MakeTape(F, 1)
+expect_true(is(F(1), "sparseMatrix"),
+            "Re-playing tape keeps sparse matrix output")

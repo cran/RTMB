@@ -7,6 +7,10 @@
 ##' @param scale Extra scale parameter - see section 'Scaling'.
 ##' @return Vector of densities.
 dmvnorm <- function(x, mu=0, Sigma, log=FALSE, scale=1) {
+    if (!identical(mu, 0)) {
+        p <- length(mu)
+        if (!all(dim(Sigma) == c(p, p))) stop("incompatible arguments")
+    }
     if (!unit(scale)) {
         return (dscale("dmvnorm", x, mu, Sigma,
                        log=log, scale=scale, vectorize=TRUE))
@@ -43,6 +47,10 @@ dmvnorm <- function(x, mu=0, Sigma, log=FALSE, scale=1) {
 ##' @details The function `dgmrf()` is essentially identical to `dmvnorm()` with the only difference that `dgmrf()` is specified via the *precision* matrix (inverse covariance) assuming that this matrix is *sparse*.
 ##' @param Q Sparse precision matrix
 dgmrf <- function(x, mu=0, Q, log=FALSE, scale=1) {
+    if (!identical(mu, 0)) {
+        p <- length(mu)
+        if (!all(dim(Q) == c(p, p))) stop("incompatible arguments")
+    }
     if (!unit(scale)) {
         return (dscale("dgmrf", x, mu, Q,
                        log=log, scale=scale, vectorize=TRUE))
@@ -179,15 +187,14 @@ dseparable <- function(...) {
             xmat <- x
             dim(xmat) <- c(nrow(x), length(x) / nrow(x))
             zero <- rep(0, nrow(x))
-            J <- MakeTape(f[[i]], zero)$jacfun()
+            T <- MakeTape(f[[i]], zero)
+            Q <- -T$jacfun()$jacfun(sparse=TRUE)(zero)
             ans <- ans + ( f[[i]](zero) + d[i] * log(sqrt(2 * pi)) ) * prod(d[-i])
-            ## FIXME: Check J linear and J(0)=0
             if (dosim) {
-                Q <- -J$jacobian(zero)
                 Lt <- chol(Q)
                 x[] <- solve(Lt, xmat)
             } else {
-                x[] <- -apply(xmat, 2, J)
+                x[] <- Q %*% xmat
             }
             x <- aperm(x, rot)
         }

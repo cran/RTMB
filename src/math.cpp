@@ -2,6 +2,7 @@
 // #include <Rcpp.h>
 // #include "TMB.h"
 #include "RTMB.h"
+extern tape_config_t tape_config;
 
 // [[Rcpp::export]]
 Rcpp::ComplexVector Arith2(const Rcpp::ComplexVector &x,
@@ -54,7 +55,11 @@ Rcpp::ComplexVector Arith2(const Rcpp::ComplexVector &x,
   else if (!op.compare("<"))  COMPARISON(CondExpLt)
   else Rf_error("'%s' not implemented", op.c_str());
 #undef CALL
-  return as_advector(z);
+  // Object determining attrib of result.
+  // FIXME: Not quite accurate - check what R src does
+  SEXP attrib_from = ( ny > nx || ny == 0 ? y : x );
+  SHALLOW_DUPLICATE_ATTRIB(z, attrib_from);
+  return z;
 }
 
 /* Math:
@@ -127,7 +132,8 @@ Rcpp::ComplexVector Math1(const Rcpp::ComplexVector &x, std::string op) {
   else Rf_error("'%s' not implemented", op.c_str());
 #undef CALL
 #undef CUMC
-  return as_advector(y);
+  SHALLOW_DUPLICATE_ATTRIB(y, x);
+  return y;
 }
 
 // [[Rcpp::export]]
@@ -296,6 +302,8 @@ SEXP SparseArith2(SEXP x,
     Eigen::SparseMatrix<ad> X = SparseInput(x);
     ConstMapMatrix          Y = MatrixInput(y);
     if (!op.compare("%*%")) z = MatrixOutput(X * Y);
+    else if (!op.compare("+")) z = MatrixOutput(X + Y);
+    else if (!op.compare("-")) z = MatrixOutput(X - Y);
     else Rf_error("'%s' not implemented", op.c_str());
   }
   // Dense OP Sparse
@@ -303,12 +311,20 @@ SEXP SparseArith2(SEXP x,
     ConstMapMatrix          X = MatrixInput(x);
     Eigen::SparseMatrix<ad> Y = SparseInput(y);
     if (!op.compare("%*%")) z = MatrixOutput(X * Y);
+    else if (!op.compare("+")) z = MatrixOutput(X + Y);
+    else if (!op.compare("-")) z = MatrixOutput(X - Y);
     else Rf_error("'%s' not implemented", op.c_str());
   }
   else Rf_error("Wrong use of 'SparseArith2'");
   return z;
 }
 
+// [[Rcpp::export]]
+SEXP Dense2Sparse(Rcpp::ComplexMatrix x) {
+  matrix<ad> X = MatrixInput(x);
+  Eigen::SparseMatrix<ad> Y = asSparseMatrix(X);
+  return SparseOutput(Y);
+}
 
 #define MATH_MATRIX_FUNCTION(MFUN)                      \
 Rcpp::ComplexMatrix math_ ## MFUN (SEXP x) {            \
