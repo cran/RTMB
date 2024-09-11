@@ -13,6 +13,10 @@
 \alias{[<-.advector}
 \alias{[[.advector}
 \alias{rep.advector}
+\alias{is.nan.advector}
+\alias{is.finite.advector}
+\alias{is.infinite.advector}
+\alias{is.na.advector}
 \alias{sum.advector}
 \alias{mean.advector}
 \alias{prod.advector}
@@ -24,7 +28,6 @@
 \alias{print.advector}
 \alias{ifelse,num,ad,ad-method}
 \alias{ifelse,num,num,num-method}
-\alias{outer,advector,advector,missing-method}
 \title{The AD vector and its methods}
 \usage{
 advector(x)
@@ -49,6 +52,14 @@ advector(x)
 
 \method{rep}{advector}(x, ...)
 
+\method{is.nan}{advector}(x)
+
+\method{is.finite}{advector}(x)
+
+\method{is.infinite}{advector}(x)
+
+\method{is.na}{advector}(x)
+
 \method{sum}{advector}(x, ..., na.rm = FALSE)
 
 \method{mean}{advector}(x, ...)
@@ -70,8 +81,6 @@ advector(x)
 \S4method{ifelse}{num,ad,ad}(test, yes, no)
 
 \S4method{ifelse}{num,num,num}(test, yes, no)
-
-\S4method{outer}{advector,advector,missing}(X, Y)
 }
 \arguments{
 \item{x}{numeric or advector}
@@ -103,10 +112,6 @@ advector(x)
 \item{yes}{\code{advector}}
 
 \item{no}{\code{advector}}
-
-\item{X}{As \link[base]{outer}}
-
-\item{Y}{As \link[base]{outer}}
 }
 \value{
 Object of class \code{"advector"}.
@@ -147,6 +152,14 @@ re-used for AD vectors.
 
 \item \code{rep(advector)}: Equivalent of \link[base]{rep}. Makes \code{outer(x,x,...)} work.
 
+\item \code{is.nan(advector)}: Equivalent of \link[base]{is.nan}. Check NaN status of a \emph{constant} \code{advector} expression. If not constant throw an error.
+
+\item \code{is.finite(advector)}: Equivalent of \link[base]{is.finite}. Check finite status of a \emph{constant} \code{advector} expression. If not constant throw an error.
+
+\item \code{is.infinite(advector)}: Equivalent of \link[base]{is.infinite}. Check infinity status of a \emph{constant} \code{advector} expression. If not constant throw an error.
+
+\item \code{is.na(advector)}: Equivalent of \link[base]{is.na}. Check NA status of an \code{advector}. NAs can only occur directly (as constants) or indirectly as the result of an operation with NA operands. For a tape built with non-NA parameters the NA status of any expression is constant and can therefore safely be used as part of the calculations. (assuming correct propagation of NAs via C-level arithmetic).
+
 \item \code{sum(advector)}: Equivalent of \link[base]{sum}. \code{na.rm=TRUE} is allowed, but note that this feature assumes correct propagation of NAs via C-level arithmetic.
 
 \item \code{mean(advector)}: Equivalent of \link[base]{mean} except no arguments beyond \code{x} are supported.
@@ -157,7 +170,7 @@ re-used for AD vectors.
 
 \item \code{as.double(advector)}: Makes \code{as.numeric()} work.
 
-\item \code{Complex(advector)}: \link{Complex} operations are not allowed and will throw an error.
+\item \code{Complex(advector)}: \link{Complex} operations are redirected to \link{adcomplex}.
 
 \item \code{Summary(advector)}: Non differentiable \link{Summary} operations (e.g. \code{min} \code{max}) are not allowed and will throw an error.
 
@@ -168,8 +181,6 @@ re-used for AD vectors.
 \item \code{ifelse(test = num, yes = ad, no = ad)}: Equivalent of \link[base]{ifelse}
 
 \item \code{ifelse(test = num, yes = num, no = num)}: Default method
-
-\item \code{outer(X = advector, Y = advector, FUN = missing)}: Equivalent of \link[base]{outer}
 
 }}
 \examples{

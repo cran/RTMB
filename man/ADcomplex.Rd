@@ -14,14 +14,27 @@
 \alias{length.adcomplex}
 \alias{Conj.adcomplex}
 \alias{Mod.adcomplex}
+\alias{Arg.adcomplex}
 \alias{+.adcomplex}
 \alias{-.adcomplex}
 \alias{*.adcomplex}
 \alias{/.adcomplex}
 \alias{exp.adcomplex}
+\alias{log.adcomplex}
 \alias{sqrt.adcomplex}
 \alias{fft,adcomplex-method}
 \alias{fft,advector-method}
+\alias{rep.adcomplex}
+\alias{as.vector.adcomplex}
+\alias{is.matrix.adcomplex}
+\alias{as.matrix.adcomplex}
+\alias{\%*\%,adcomplex,ANY-method}
+\alias{solve,adcomplex,ANY-method}
+\alias{colSums,adcomplex-method}
+\alias{rowSums,adcomplex-method}
+\alias{diag,adcomplex,ANY,ANY-method}
+\alias{Ops,advector,adcomplex-method}
+\alias{Ops,adcomplex,advector-method}
 \title{AD complex numbers}
 \usage{
 adcomplex(real, imag = rep(advector(0), length(real)))
@@ -48,6 +61,8 @@ adcomplex(real, imag = rep(advector(0), length(real)))
 
 \method{Mod}{adcomplex}(z)
 
+\method{Arg}{adcomplex}(z)
+
 \method{+}{adcomplex}(x, y)
 
 \method{-}{adcomplex}(x, y)
@@ -58,11 +73,35 @@ adcomplex(real, imag = rep(advector(0), length(real)))
 
 \method{exp}{adcomplex}(x)
 
+\method{log}{adcomplex}(x, base)
+
 \method{sqrt}{adcomplex}(x)
 
 \S4method{fft}{adcomplex}(z, inverse = FALSE)
 
 \S4method{fft}{advector}(z, inverse = FALSE)
+
+\method{rep}{adcomplex}(x, ...)
+
+\method{as.vector}{adcomplex}(x, mode = "any")
+
+\method{is.matrix}{adcomplex}(x)
+
+\method{as.matrix}{adcomplex}(x, ...)
+
+\S4method{\%*\%}{adcomplex,ANY}(x, y)
+
+\S4method{solve}{adcomplex,ANY}(a, b)
+
+\S4method{colSums}{adcomplex}(x)
+
+\S4method{rowSums}{adcomplex}(x)
+
+\S4method{diag}{adcomplex,ANY,ANY}(x)
+
+\S4method{Ops}{advector,adcomplex}(e1, e2)
+
+\S4method{Ops}{adcomplex,advector}(e1, e2)
 }
 \arguments{
 \item{real}{Real part}
@@ -81,7 +120,19 @@ adcomplex(real, imag = rep(advector(0), length(real)))
 
 \item{y}{An object of class \code{'adcomplex'}}
 
+\item{base}{Not implemented}
+
 \item{inverse}{As \link[stats]{fft}}
+
+\item{mode}{As \link[base]{as.vector}}
+
+\item{a}{matrix}
+
+\item{b}{matrix, vector or missing}
+
+\item{e1}{Left operand}
+
+\item{e2}{Right operand}
 }
 \value{
 Object of class \code{"adcomplex"}.
@@ -115,6 +166,8 @@ A limited set of complex number operations can be used when constructing AD tape
 
 \item \code{Mod(adcomplex)}: As \link[base]{complex}
 
+\item \code{Arg(adcomplex)}: As \link[base]{complex}
+
 \item \code{ + }: As \link[base]{complex}
 
 \item \code{ - }: As \link[base]{complex}
@@ -125,11 +178,35 @@ A limited set of complex number operations can be used when constructing AD tape
 
 \item \code{exp(adcomplex)}: As \link[base]{complex}
 
+\item \code{log(adcomplex)}: As \link[base]{complex}
+
 \item \code{sqrt(adcomplex)}: As \link[base]{complex}
 
 \item \code{fft(adcomplex)}: Fast Fourier Transform equivalent to \link[stats]{fft}. Notably this is the \strong{multivariate} transform when \code{x} is an array.
 
 \item \code{fft(advector)}: If real input is supplied it is first converted to complex.
+
+\item \code{rep(adcomplex)}: As \link[base]{rep}
+
+\item \code{as.vector(adcomplex)}: Apply for each of real/imag
+
+\item \code{is.matrix(adcomplex)}: Apply for real
+
+\item \code{as.matrix(adcomplex)}: Apply for each of real/imag
+
+\item \code{x \%*\% y}: Complex matrix multiply
+
+\item \code{solve(a = adcomplex, b = ANY)}: Complex matrix inversion and solve
+
+\item \code{colSums(adcomplex)}: Apply for each of real/imag
+
+\item \code{rowSums(adcomplex)}: Apply for each of real/imag
+
+\item \code{diag(x = adcomplex, nrow = ANY, ncol = ANY)}: Apply for each of real/imag
+
+\item \code{Ops(e1 = advector, e2 = adcomplex)}: Mixed real/complex arithmetic
+
+\item \code{Ops(e1 = adcomplex, e2 = advector)}: Mixed real/complex arithmetic
 
 }}
 \examples{

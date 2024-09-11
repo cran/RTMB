@@ -76,6 +76,8 @@ Conj.adcomplex <- function(z) adcomplex(Re(z), -Im(z))
 ##' @describeIn ADcomplex As \link[base]{complex}
 Mod.adcomplex <- function(z) sqrt(Re(z)*Re(z)+Im(z)*Im(z))
 ##' @describeIn ADcomplex As \link[base]{complex}
+Arg.adcomplex <- function(z) math_atan2(Im(z), Re(z))
+##' @describeIn ADcomplex As \link[base]{complex}
 "+.adcomplex" <- function(x, y) {
     adcomplex(Re(x)+Re(y), Im(x)+Im(y))
 }
@@ -97,18 +99,39 @@ exp.adcomplex <- function(x) {
     adcomplex(s*cos(Im(x)), s*sin(Im(x)))
 }
 ##' @describeIn ADcomplex As \link[base]{complex}
+##' @param base Not implemented
+log.adcomplex <- function(x, base) {
+    if (!missing(base)) stop("Argument 'base' not implemented")
+    adcomplex(log(Mod(x)), Arg(x))
+}
+##' @describeIn ADcomplex As \link[base]{complex}
 sqrt.adcomplex <- function(x) {
     M <- Mod(x)
     s <- sign(Im(x))
     adcomplex(sqrt(.5*(Re(x)+M)), s * sqrt(.5*(-Re(x)+M)))
 }
 unsplit <- function(z) {
+    d <- dim(z)
     dim(z) <- NULL
-    as.vector(t(cbind(Re(z), Im(z))))
+    ans <- as.vector(t(cbind(Re(z), Im(z))))
+    if (!is.null(d)) {
+        dim(ans) <- c(2L ,d)
+    }
+    ans
 }
 resplit <- function(x) {
+    d <- dim(x)
     dim(x) <- c(2, length(x)/2)
-    adcomplex(x[1,], x[2,])
+    ans <- if (inherits(x, "advector")) {
+               adcomplex(real=x[1,], imag=x[2,])
+           } else {
+               complex(real=x[1,], imaginary=x[2,])
+           }
+    if (!is.null(d)) {
+        if (d[1] != 2L) stop("Unexpected dimension")
+        dim(ans) <- d[-1]
+    }
+    ans
 }
 ##' @describeIn ADcomplex Fast Fourier Transform equivalent to \link[stats]{fft}. Notably this is the **multivariate** transform when `x` is an array.
 ##' @param inverse As \link[stats]{fft}
@@ -130,3 +153,67 @@ setMethod("fft", "advector",
           function(z, inverse) {
               fft(adcomplex(z), inverse)
           })
+
+#####################################
+
+##' @describeIn ADcomplex As \link[base]{rep}
+rep.adcomplex <- function(x,...)
+    adcomplex(rep(Re(x),...),
+              rep(Im(x),...))
+
+##' @describeIn ADcomplex Apply for each of real/imag
+##' @param mode As \link[base]{as.vector}
+as.vector.adcomplex <- function(x, mode="any")
+    adcomplex(as.vector(Re(x), mode),
+              as.vector(Im(x), mode))
+
+##' @describeIn ADcomplex Apply for real
+is.matrix.adcomplex <- function(x) is.matrix(Re(x))
+
+##' @describeIn ADcomplex Apply for each of real/imag
+as.matrix.adcomplex <- function(x, ...) adcomplex(as.matrix(Re(x)),
+                                                  as.matrix(Im(x)))
+
+##' @describeIn ADcomplex Complex matrix multiply
+setMethod("%*%", "adcomplex", function(x, y) {
+    adcomplex(Re(x)%*%Re(y) - Im(x)%*%Im(y),
+              Re(x)%*%Im(y) + Im(x)%*%Re(y))
+})
+
+##' @describeIn ADcomplex Complex matrix inversion and solve
+##' @param a matrix
+##' @param b matrix, vector or missing
+setMethod("solve", "adcomplex", function(a, b) {
+    a <- as.matrix(a)
+    ans <- solve_complex_atomic(a)
+    if (!missing(b)) {
+        b <- as.matrix(b)
+        ans <- ans %*% b
+    }
+    ans
+})
+
+##' @describeIn ADcomplex Apply for each of real/imag
+setMethod("colSums", "adcomplex",
+          function(x) adcomplex(colSums(Re(x)),
+                                colSums(Im(x))))
+
+##' @describeIn ADcomplex Apply for each of real/imag
+setMethod("rowSums", "adcomplex",
+          function(x) adcomplex(rowSums(Re(x)),
+                                rowSums(Im(x))))
+
+##' @describeIn ADcomplex Apply for each of real/imag
+setMethod("diag", "adcomplex",
+          function(x) adcomplex(diag(Re(x)),
+                                diag(Im(x))))
+
+##' @describeIn ADcomplex Mixed real/complex arithmetic
+##' @param e1 Left operand
+##' @param e2 Right operand
+setMethod("Ops", c("advector", "adcomplex"),
+          function(e1, e2) callGeneric(adcomplex(e1), e2))
+
+##' @describeIn ADcomplex Mixed real/complex arithmetic
+setMethod("Ops", c("adcomplex", "advector"),
+          function(e1, e2) callGeneric(e1, adcomplex(e2)))

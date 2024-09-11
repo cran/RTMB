@@ -257,12 +257,20 @@ splineptr_eval <- function(ptr, x) {
     .Call(`_RTMB_splineptr_eval`, ptr, x)
 }
 
+sytrisol <- function(L, W) {
+    .Call(`_RTMB_sytrisol`, L, W)
+}
+
 Arith2 <- function(x, y, op) {
     .Call(`_RTMB_Arith2`, x, y, op)
 }
 
 Math1 <- function(x, op) {
     .Call(`_RTMB_Math1`, x, op)
+}
+
+math_atan2 <- function(y, x) {
+    .Call(`_RTMB_math_atan2`, y, x)
 }
 
 Reduce1 <- function(x, op) {

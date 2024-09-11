@@ -139,16 +139,19 @@ setMethod("%*%",
 setMethod("%*%",
           signature("ad", "ad"),
           function(x, y) {
-              x <- as.matrix(x)
               y <- as.matrix(y)
+              ## Promotion of a vector to a 1-row matrix
+              if (is.null(dim(x)) && length(x) == nrow(y))
+                  x <- t(x)
+              x <- as.matrix(x)
               matmul(advector(x), advector(y))
           })
 ##' @describeIn ADmatrix AD matrix multiply
-setMethod("tcrossprod", signature("advector"),
-          function(x, y=NULL) {if (is.null(y)) y <- x; x %*% t(y)} )
+setMethod("tcrossprod", signature("ad", "ad."),
+          function(x, y) {if (is.null(y)) y <- x; x %*% t(y)} )
 ##' @describeIn ADmatrix AD matrix multiply
-setMethod( "crossprod", signature("advector"),
-          function(x, y=NULL) {if (is.null(y)) y <- x; t(x) %*% y} )
+setMethod( "crossprod", signature("ad", "ad."),
+          function(x, y) {if (is.null(y)) y <- x; t(x) %*% y} )
 ##' @describeIn ADmatrix AD matrix cov2cor
 ##' @param V Covariance matrix
 setMethod( "cov2cor", signature("advector"),
@@ -186,11 +189,19 @@ setMethod("solve",
               stop("Sparse AD solve is not yet implemented")
           })
 ##' @describeIn ADmatrix AD matrix (or array) colsums
+##' @param na.rm Logical; Remove NAs while taping.
+##' @param dims Same as \link[base]{colSums} and \link[base]{rowSums}.
 setMethod("colSums", signature(x="advector"),
-          function(x) { apply(x, seq_len(length(dim(x)))[-1L], sum) } )
+          function(x, na.rm, dims) {
+              if (dims != 1L) stop("AD version requires dims=1")
+              apply(x, seq_len(length(dim(x)))[-1L], sum, na.rm=na.rm)
+          } )
 ##' @describeIn ADmatrix AD matrix (or array) rowsums
 setMethod("rowSums", signature("advector"),
-          function(x) { apply(x, 1L, sum) } )
+          function(x, na.rm, dims) {
+              if (dims != 1L) stop("AD version requires dims=1")
+              apply(x, 1L, sum, na.rm=na.rm)
+          } )
 ##' @describeIn ADmatrix AD matrix column bind
 ##' @param ... As \link[base]{cbind}
 cbind.advector <- function (...) {
@@ -351,13 +362,6 @@ setMethod("ifelse", signature(test="num", yes="num", no="num"),
           function(test, yes, no) {
               base::ifelse(test, yes, no)
           })
-
-##' @describeIn ADvector Equivalent of \link[base]{outer}
-##' @param X As \link[base]{outer}
-##' @param Y As \link[base]{outer}
-setMethod("outer", signature(X="advector", Y="advector", FUN="missing"),
-          function (X, Y) outer(X, Y, function(x, y) x * y))
-
 
 ################################################################################
 

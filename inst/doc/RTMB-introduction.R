@@ -76,3 +76,29 @@ f2 <- function(parms) {
 ## -----------------------------------------------------------------------------
 obj <- MakeADFun(f2, parameters, random=c("a", "b"))
 
+## -----------------------------------------------------------------------------
+f3 <- function(parms, data) {
+    getAll(data, parms, warn=FALSE)
+    ## Optional (enables extra RTMB features)
+    weight <- OBS(weight)
+    ## Random slopes
+    a %~% dnorm(mean=mua, sd=sda)
+    ## Random intercepts
+    b %~% dnorm(mean=mub, sd=sdb)
+    ## Data
+    predWeight <- a[Chick] * Time + b[Chick]
+    weight %~% dnorm(predWeight, sd=sdeps)
+    ## Get predicted weight uncertainties
+    ADREPORT(predWeight)
+}
+
+## -----------------------------------------------------------------------------
+cmb <- function(f, d) function(p) f(p, d)
+
+## -----------------------------------------------------------------------------
+## Using the original ChickWeight
+obj <- MakeADFun(cmb(f3, ChickWeight), parameters, random=c("a", "b"))
+## Using a new dataset
+ChickWeightNew <- transform(ChickWeight, weight=log(weight))
+obj <- MakeADFun(cmb(f3, ChickWeightNew), parameters, random=c("a", "b"))
+
