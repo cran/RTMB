@@ -76,9 +76,11 @@
 \alias{dsn}
 \alias{dSHASHo}
 \alias{dtweedie}
-\alias{dnbinom2}
 \alias{dnbinom_robust}
+\alias{dnbinom2}
 \alias{dlgamma}
+\alias{logspace_add}
+\alias{logspace_sub}
 \alias{dnorm,ad,ad.,ad.,logical.-method}
 \alias{dnorm,num,num.,num.,logical.-method}
 \alias{dnorm,osa,ANY,ANY,ANY-method}
@@ -239,19 +241,23 @@
 
 \S4method{besselY}{num,num}(x, nu)
 
-dbinom_robust(x, size, logit_p, log)
+dbinom_robust(x, size, logit_p, log = FALSE)
 
-dsn(x, alpha, log)
+dsn(x, alpha, log = FALSE)
 
-dSHASHo(x, mu, sigma, nu, tau, log)
+dSHASHo(x, mu, sigma, nu, tau, log = FALSE)
 
-dtweedie(x, mu, phi, p, log)
+dtweedie(x, mu, phi, p, log = FALSE)
 
-dnbinom2(x, mu, var, log)
+dnbinom_robust(x, log_mu, log_var_minus_mu, log = FALSE)
 
-dnbinom_robust(x, log_mu, log_var_minus_mu, log)
+dnbinom2(x, mu, var, log = FALSE)
 
-dlgamma(x, shape, scale, log)
+dlgamma(x, shape, scale, log = FALSE)
+
+logspace_add(logx, logy)
+
+logspace_sub(logx, logy)
 
 \S4method{dnorm}{ad,ad.,ad.,logical.}(x, mean = 0, sd = 1, log = FALSE)
 
@@ -340,11 +346,15 @@ dcompois2(x, mean, nu, log = FALSE)
 
 \item{phi}{parameter}
 
-\item{var}{parameter}
-
 \item{log_mu}{parameter}
 
 \item{log_var_minus_mu}{parameter}
+
+\item{var}{parameter}
+
+\item{logx}{Log-space input}
+
+\item{logy}{Log-space input}
 
 \item{meanlog}{Parameter; Mean on log scale.}
 
@@ -604,11 +614,15 @@ which documentation should be looked up online.
 
 \item \code{dtweedie()}: AD implementation
 
-\item \code{dnbinom2()}: AD implementation
-
 \item \code{dnbinom_robust()}: AD implementation
 
+\item \code{dnbinom2()}: AD implementation
+
 \item \code{dlgamma()}: AD implementation
+
+\item \code{logspace_add()}: AD implementation
+
+\item \code{logspace_sub()}: AD implementation
 
 \item \code{dnorm(x = ad, mean = ad., sd = ad., log = logical.)}: AD implementation of \link[stats]{dnorm}
 

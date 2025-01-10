@@ -56,6 +56,10 @@ t.adsparse <- function(x) ApplyMatrixMethod(Matrix::t, x)
     x <- ApplyMatrixReplaceMethod("[<-", x, ..., value=value)
     x
 }
+##' @describeIn ADmatrix Convert AD sparse to dense matrix.
+as.matrix.adsparse <- function(x, ...) {
+    x + matrix(0, nrow(x), ncol(x))
+}
 ##' @describeIn ADmatrix AD sparse matrix diagonal extract. Re-directs to \link[Matrix]{diag,CsparseMatrix-method}.
 setMethod("diag", c("adsparse", "missing", "missing"), function(x) ApplyMatrixMethod("diag", x) )
 
@@ -180,13 +184,21 @@ setMethod("solve", signature("num", "num."),
           function(a, b) {
               base::solve(a, b)
           })
-##' @describeIn ADmatrix Sparse AD matrix solve (not yet implemented)
+##' @describeIn ADmatrix Sparse AD matrix solve
 ##' @param a matrix
 ##' @param b matrix, vector or missing
 setMethod("solve",
           signature("anysparse", "ad."),
           function(a, b) {
-              stop("Sparse AD solve is not yet implemented")
+              a <- as(a, "adsparse")
+              missing.b <- missing(b)
+              if (missing.b)
+                  b <- diag(nrow(a))
+              ans <- SparseSolve(a, advector(as.matrix(b)))
+              dim(ans) <- dim(b)
+              if (missing.b)
+                  ans <- as(ans, "sparseMatrix")
+              ans
           })
 ##' @describeIn ADmatrix AD matrix (or array) colsums
 ##' @param na.rm Logical; Remove NAs while taping.
@@ -201,6 +213,20 @@ setMethod("rowSums", signature("advector"),
           function(x, na.rm, dims) {
               if (dims != 1L) stop("AD version requires dims=1")
               apply(x, 1L, sum, na.rm=na.rm)
+          } )
+##' @describeIn ADmatrix AD sparse matrix colsums
+setMethod("colSums", signature(x="adsparse"),
+          function(x, na.rm, dims) {
+              if (dims != 1L) stop("AD version requires dims=1")
+              if (na.rm) x@x[is.na(x@x)] <- 0
+              drop( t(rep(1, nrow(x))) %*% x )
+          } )
+##' @describeIn ADmatrix AD sparse matrix rowsums
+setMethod("rowSums", signature("adsparse"),
+          function(x, na.rm, dims) {
+              if (dims != 1L) stop("AD version requires dims=1")
+              if (na.rm) x@x[is.na(x@x)] <- 0
+              drop( x %*% rep(1, ncol(x)) )
           } )
 ##' @describeIn ADmatrix AD matrix column bind
 ##' @param ... As \link[base]{cbind}
@@ -337,7 +363,7 @@ setMethod("sapply", signature(X="ANY"),
               ans <- base::sapply(X, FUN, ..., simplify = FALSE, USE.NAMES = TRUE)
               ## Adapted from 'base::sapply':
               if (!isFALSE(simplify)) {
-                  cl <- class(ans[[1L]])
+                  cl <- if (length(ans)) class(ans[[1L]]) else NULL
                   ans <- simplify2array(ans, higher = (simplify == "array"))
                   if (identical(cl, "advector")) ## FIXME: Test all elements
                       class(ans) <- cl
@@ -364,6 +390,20 @@ setMethod("ifelse", signature(test="num", yes="num", no="num"),
           })
 
 ################################################################################
+
+dGenericEval <- function(.Generic, ..., log) {
+    dfun <- match.fun(paste("distr", .Generic, sep="_"))
+    args <- list(...)
+    anyAD <- any(unlist(lapply(args, inherits, "advector")))
+    args <- lapply(args, advector)
+    if (!missing(log))
+        args$give_log <- as.logical(log)
+    ans <- do.call(dfun, args)
+    if (anyAD)
+        ans
+    else
+        getValues(ans)
+}
 
 ##' @describeIn Distributions Conway-Maxwell-Poisson. Calculate density.
 dcompois <- function(x, mode, nu, log = FALSE) {

@@ -217,6 +217,8 @@ NULL
 ##' @param sd parameter
 ##' @param scale parameter
 ##' @param log Logical; Return log density/probability?
+##' @param logx Log-space input
+##' @param logy Log-space input
 ##' @rdname Distributions
 ##' @name Distributions
 ##' @return In autodiff contexts an object of class \code{"advector"} is returned; Otherwise a standard numeric vector.
@@ -326,6 +328,16 @@ NULL
 ## * We add a dot '.' to the class union to signify that it might be missing.
 ## Obviously, a bit of a mess.
 setClass("advector") ## Virtual class
+##' AD sparse matrix class
+##'
+##' Sparse matrices in \pkg{RTMB} are essentially `dgCMatrix` with an `advector` x-slot.
+##'
+##' @slot x Non-zeros
+##' @slot i row indices (zero based)
+##' @slot p col pointers (zero based)
+##' @slot Dim Dimension
+##' @name ADsparse
+##' @aliases adsparse
 setClass("adsparse",
          slots=c(x="advector", i="integer", p="integer", Dim="integer"))
 ## Helpers to setMethod

@@ -5,16 +5,14 @@
 extern tape_config_t tape_config;
 
 // [[Rcpp::export]]
-Rcpp::ComplexVector Arith2(const Rcpp::ComplexVector &x,
-                           const Rcpp::ComplexVector &y,
-                           std::string op) {
-  CHECK_INPUT(x);
-  CHECK_INPUT(y);
+ADrep Arith2(ADrep x,
+             ADrep y,
+             std::string op) {
   size_t nx = x.size(), ny = y.size();
   size_t n = (std::min(nx, ny) > 0 ? std::max(nx, ny) : 0);
   bool do_vectorize =
     tape_config.ops_vectorize() && (nx==1 || nx==n) && (ny==1 || ny==n);
-  Rcpp::ComplexVector z(n);
+  ADrep z(n);
   ad* X = adptr(x);
   ad* Y = adptr(y);
   ad* Z = adptr(z);
@@ -83,12 +81,11 @@ Rcpp::ComplexVector Arith2(const Rcpp::ComplexVector &x,
 ad rtmb_gamma(ad x) { return exp(lgamma(x)); }
 
 // [[Rcpp::export]]
-Rcpp::ComplexVector Math1(const Rcpp::ComplexVector &x, std::string op) {
-  CHECK_INPUT(x);
+ADrep Math1(ADrep x, std::string op) {
   size_t n = x.size();
   bool do_vectorize =
     tape_config.math_vectorize() && n>1;
-  Rcpp::ComplexVector y(n);
+  ADrep y(n);
   ad* X = adptr(x); // FIXME: TMBad::ad_segment(const *)
   ad* Y = adptr(y);
 #define CALL(OP) for (size_t i=0; i<n; i++) Y[i] = OP ( X[i] )
@@ -138,52 +135,56 @@ Rcpp::ComplexVector Math1(const Rcpp::ComplexVector &x, std::string op) {
 
 // atan2 is not in any group !
 // [[Rcpp::export]]
-Rcpp::ComplexVector math_atan2 (Rcpp::ComplexVector y, Rcpp::ComplexVector x) {
+ADrep math_atan2 (ADrep y, ADrep x) {
   int n1=y.size();
   int n2=x.size();
   int nmax = std::max({n1, n2});
   int nmin = std::min({n1, n2});
   int n = (nmin == 0 ? 0 : nmax);
-  Rcpp::ComplexVector ans(n);
+  ADrep ans(n);
   const ad* X1 = adptr(y); const ad* X2 = adptr(x);
   ad* Y = adptr(ans);
   for (int i=0; i<n; i++) Y[i] = TMBad::atan2(X1[i % n1], X2[i % n2]);
-  return as_advector(ans);
+  return ans;
 }
 
 // [[Rcpp::export]]
-Rcpp::ComplexVector Reduce1(const Rcpp::ComplexVector &x, std::string op) {
-  CHECK_INPUT(x);
+ADrep Reduce1(ADrep x, std::string op) {
   size_t n = x.size();
-  Rcpp::ComplexVector y(1);
-  ad ans = 0;
-#define REDUCE(OP) for (size_t i=0; i<n; i++) ans = ans OP cplx2ad(x[i]);
+  ADrep y(1);
+  ad& ans = y.adptr()[0];
+  ad* X = adptr(x);
+#define REDUCE(OP) for (size_t i=0; i<n; i++) ans = ans OP X[i];
+#define REDUCE2(OP) for (size_t i=1; i<n; i++) ans = OP(ans, X[i]);
   if (!op.compare("+")) {
     if ( !tape_config.sum_vectorize() ) {
       ans = 0.; REDUCE(+);
     } else {
-      ad* X = adptr(x);
       ans = TMBad::sum(TMBad::ad_segment(X, n));
     }
   } else if (!op.compare("*")) {
     ans = 1.; REDUCE(*);
+  } else if (!op.compare("min")) {
+    if (n == 0) Rcpp::stop("Length must be positive");
+    ans = X[0]; REDUCE2(TMBad::min);
+  } else if (!op.compare("max")) {
+    if (n == 0) Rcpp::stop("Length must be positive");
+    ans = X[0]; REDUCE2(TMBad::max);
   }
   else Rf_error("'%s' not implemented", op.c_str());
 #undef REDUCE
-  y[0] = ad2cplx(ans);
-  return as_advector(y);
+#undef REDUCE2
+  return y;
 }
 
 // [[Rcpp::export]]
-Rcpp::ComplexMatrix matmul (const Rcpp::ComplexMatrix &x,
-                            const Rcpp::ComplexMatrix &y) {
+ADrep matmul (ADrep x,
+              ADrep y) {
   if (x.ncol() != y.nrow())
     Rcpp::stop("non-conformable arguments");
-  CHECK_INPUT(x);
-  CHECK_INPUT(y);
   ConstMapMatrix X = MatrixInput(x);
   ConstMapMatrix Y = MatrixInput(y);
-  Rcpp::ComplexMatrix Z;
+  ADrep Z;
   if ( tape_config.matmul_plain() )
     Z = MatrixOutput(X * Y);
   else if ( tape_config.matmul_atomic() )
@@ -199,71 +200,67 @@ Rcpp::ComplexMatrix matmul (const Rcpp::ComplexMatrix &x,
 }
 
 // [[Rcpp::export]]
-Rcpp::ComplexMatrix matinv (const Rcpp::ComplexMatrix &x) {
+ADrep matinv (ADrep x) {
   if (x.ncol() != x.nrow())
     Rcpp::stop("Expected a square matrix");
-  CHECK_INPUT(x);
   ConstMapMatrix X = MatrixInput(x);
   return MatrixOutput(atomic::matinv(matrix<ad>(X)));
 }
 
 template<class nlDensity>
-Rcpp::ComplexVector colApply (const Rcpp::ComplexMatrix &x,
-                              nlDensity &F,
-                              bool give_log) {
-  ConstMapMatrix X((ad*) x.begin(), x.nrow(), x.ncol());
-  Rcpp::ComplexVector z(x.ncol());
+ADrep colApply (ADrep x,
+                nlDensity &F,
+                bool give_log) {
+  ConstMapMatrix X = MatrixInput(x);
+  ADrep z(x.ncol()); ad* Z = adptr(z);
   for (int j=0; j < X.cols(); j++) {
     ad ans = -F(vector<ad>(X.col(j)));
     if (!give_log) ans = exp(ans);
-    z[j] = ad2cplx(ans);
+    Z[j] = ans;
   }
-  return as_advector(z);
+  return z;
 }
 template<class nlDensity>
-Rcpp::ComplexVector colApply2(const Rcpp::ComplexMatrix &x,
-                              const Rcpp::ComplexVector &keep,
-                              nlDensity &F,
-                              bool give_log) {
-  ConstMapMatrix X((ad*) x.begin(), x.nrow(), x.ncol());
-  ConstMapMatrix K((ad*) keep.begin(), x.nrow(), x.ncol());
-  Rcpp::ComplexVector z(x.ncol());
+ADrep colApply2(ADrep x,
+                ADrep keep,
+                nlDensity &F,
+                bool give_log) {
+  ConstMapMatrix X = MatrixInput(x);
+  ConstMapMatrix K = MatrixInput(keep);
+  ADrep z(x.ncol()); ad* Z = adptr(z);
   for (int j=0; j < X.cols(); j++) {
     ad ans = -F(vector<ad>(X.col(j)), vector<ad>(K.col(j)));
     if (!give_log) ans = exp(ans);
-    z[j] = ad2cplx(ans);
+    Z[j] = ans;
   }
-  return as_advector(z);
+  return z;
 }
 
 // [[Rcpp::export]]
-Rcpp::ComplexVector dmvnorm0 (const Rcpp::ComplexMatrix &x,
-                              const Rcpp::ComplexMatrix &s,
-                              bool give_log,
-                              SEXP keep = R_NilValue) {
+ADrep dmvnorm0 (ADrep x,
+                ADrep s,
+                bool give_log,
+                SEXP keep = R_NilValue) {
   if (s.ncol() != s.nrow())
     Rcpp::stop("cov matrix must be square");
   if (x.nrow() != s.nrow())
     Rcpp::stop("non-conformable arguments");
-  CHECK_INPUT(x);
-  CHECK_INPUT(s);
-  ConstMapMatrix S((ad*) s.begin(), s.nrow(), s.ncol());
+  ConstMapMatrix S = MatrixInput(s);
   auto nldens = density::MVNORM(matrix<ad>(S), tape_config.mvnorm_atomic() );
   if (Rf_isNull(keep)) {
     return colApply(x, nldens, give_log);
   } else {
-    Rcpp::ComplexVector k (keep);
+    ADrep k (keep);
     if (x.size() != k.size())
       Rcpp::stop("x / keep non-conformable arguments");
-    CHECK_INPUT(k);
     return colApply2(x, k, nldens, give_log);
   }
 }
 
 // [[Rcpp::export]]
-Rcpp::ComplexVector dgmrf0 (const Rcpp::ComplexMatrix &x,
-                            Rcpp::S4 q,
-                            bool give_log) {
+ADrep dgmrf0 (ADrep x,
+              Rcpp::RObject q,
+              bool give_log) {
   // TMB FIXME:
   //   newton::log_determinant<TMBad::global::ad_aug> (H=...) at /TMB/include/tmbutils/newton.hpp:1191
   // adds to tape!
@@ -274,20 +271,18 @@ Rcpp::ComplexVector dgmrf0 (const Rcpp::ComplexMatrix &x,
   Rcpp::IntegerVector Dim = q.slot("Dim");
   if (Dim[0] != Dim[1])
     Rcpp::stop("Precision matrix must be square");
-  if (x.nrow() != Dim[0])
+  if (x.nrow() != (size_t) Dim[0])
     Rcpp::stop("non-conformable arguments");
-  CHECK_INPUT(x);
-  CHECK_INPUT(q.slot("x"));
   Eigen::SparseMatrix<ad> Q = SparseInput(q);
   auto nldens = density::GMRF(Q);
   return colApply(x, nldens, give_log);
 }
 
 // [[Rcpp::export]]
-SEXP SparseArith2(SEXP x,
-                  SEXP y,
-                  std::string op) {
-  SEXP z;
+Rcpp::RObject SparseArith2(Rcpp::RObject x,
+                           Rcpp::RObject y,
+                           std::string op) {
+  Rcpp::RObject z;
   // Sparse OP Sparse
   if (is_adsparse(x) && is_adsparse(y)) {
     Eigen::SparseMatrix<ad> X = SparseInput(x);
@@ -337,14 +332,14 @@ SEXP SparseArith2(SEXP x,
 }
 
 // [[Rcpp::export]]
-SEXP Dense2Sparse(Rcpp::ComplexMatrix x) {
+Rcpp::RObject Dense2Sparse(ADrep x) {
   matrix<ad> X = MatrixInput(x);
   Eigen::SparseMatrix<ad> Y = asSparseMatrix(X);
   return SparseOutput(Y);
 }
 
 #define MATH_MATRIX_FUNCTION(MFUN)                      \
-Rcpp::ComplexMatrix math_ ## MFUN (SEXP x) {            \
+  ADrep math_ ## MFUN (Rcpp::RObject x) {               \
   matrix<ad> X;                                         \
   if (is_adsparse(x)) {                                 \
     X = SparseInput(x);                                 \
@@ -359,24 +354,24 @@ Rcpp::ComplexMatrix math_ ## MFUN (SEXP x) {            \
 }
 
 // [[Rcpp::export]]
-Rcpp::ComplexMatrix math_expm(SEXP x);
+ADrep math_expm(Rcpp::RObject x);
 MATH_MATRIX_FUNCTION(expm)
 
 // [[Rcpp::export]]
-Rcpp::ComplexMatrix math_sqrtm(SEXP x);
+ADrep math_sqrtm(Rcpp::RObject x);
 MATH_MATRIX_FUNCTION(sqrtm)
 
 // [[Rcpp::export]]
-Rcpp::ComplexMatrix math_absm(SEXP x);
+ADrep math_absm(Rcpp::RObject x);
 MATH_MATRIX_FUNCTION(absm)
 
 #undef MATH_MATRIX_FUNCTION
 
 // [[Rcpp::export]]
-Rcpp::ComplexMatrix expATv (SEXP AT,
-                            Rcpp::ComplexMatrix v,
-                            Rcpp::ComplexVector N,
-                            Rcpp::List cfg) {
+ADrep expATv (SEXP AT,
+              ADrep v,
+              ADrep N,
+              Rcpp::List cfg) {
   if (!is_adsparse(AT)) Rcpp::stop("Expecting adsparse 'AT'");
   if (!is_adscalar(N)) Rcpp::stop("Expecting adscalar 'N'");
   // Inputs
@@ -399,5 +394,26 @@ Rcpp::ComplexMatrix expATv (SEXP AT,
     vector<ad> out = F(vec);
     ans.col(j).array() = out;
   }
+  return MatrixOutput(ans);
+}
+
+// [[Rcpp::export]]
+ADrep SparseSolve(Rcpp::RObject s, ADrep x) {
+  typedef Eigen::SparseLU<Eigen::SparseMatrix<ad>, Eigen::COLAMDOrdering<int> >
+    SparseLU_t;
+  SparseLU_t* solver;
+  // Cache factorization as Matrix package does
+  if (!Rcpp::RObject(s).hasAttribute("SparseLU")) {
+    Eigen::SparseMatrix<ad> S = SparseInput(s);
+    solver = new SparseLU_t;
+    (*solver).compute(S);
+    SEXP ptr = Rcpp::XPtr<SparseLU_t>(solver);
+    Rcpp::RObject(s).attr("SparseLU") = ptr;
+  } else {
+    SEXP ptr = Rcpp::RObject(s).attr("SparseLU");
+    solver = Rcpp::XPtr<SparseLU_t> (ptr);
+  }
+  ConstMapMatrix X = MatrixInput(x);
+  matrix<ad> ans = (*solver).solve(X);
   return MatrixOutput(ans);
 }

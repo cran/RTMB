@@ -11,6 +11,7 @@
 \alias{t.adsparse}
 \alias{[.adsparse}
 \alias{[<-.adsparse}
+\alias{as.matrix.adsparse}
 \alias{diag,adsparse,missing,missing-method}
 \alias{expm,advector-method}
 \alias{expm,adsparse-method}
@@ -27,6 +28,8 @@
 \alias{solve,anysparse,ad.-method}
 \alias{colSums,advector-method}
 \alias{rowSums,advector-method}
+\alias{colSums,adsparse-method}
+\alias{rowSums,adsparse-method}
 \alias{cbind.advector}
 \alias{rbind.advector}
 \title{AD matrix methods (sparse and dense)}
@@ -46,6 +49,8 @@
 \method{[}{adsparse}(x, ...)
 
 \method{[}{adsparse}(x, ...) <- value
+
+\method{as.matrix}{adsparse}(x, ...)
 
 \S4method{diag}{adsparse,missing,missing}(x)
 
@@ -78,6 +83,10 @@
 \S4method{colSums}{advector}(x, na.rm, dims)
 
 \S4method{rowSums}{advector}(x, na.rm, dims)
+
+\S4method{colSums}{adsparse}(x, na.rm, dims)
+
+\S4method{rowSums}{adsparse}(x, na.rm, dims)
 
 \method{cbind}{advector}(...)
 
@@ -144,6 +153,8 @@ Matrices (\strong{base} package) and sparse matrices (\strong{Matrix} package) c
 
 \item \code{`[`(adsparse) <- value}: AD sparse matrix subset assignment. Re-directs to \link[Matrix]{[<--methods}.
 
+\item \code{as.matrix(adsparse)}: Convert AD sparse to dense matrix.
+
 \item \code{diag(x = adsparse, nrow = missing, ncol = missing)}: AD sparse matrix diagonal extract. Re-directs to \link[Matrix]{diag,CsparseMatrix-method}.
 
 \item \code{expm(advector)}: AD matrix exponential
@@ -170,11 +181,15 @@ Matrices (\strong{base} package) and sparse matrices (\strong{Matrix} package) c
 
 \item \code{solve(a = num, b = num.)}: AD matrix inversion and solve
 
-\item \code{solve(a = anysparse, b = ad.)}: Sparse AD matrix solve (not yet implemented)
+\item \code{solve(a = anysparse, b = ad.)}: Sparse AD matrix solve
 
 \item \code{colSums(advector)}: AD matrix (or array) colsums
 
 \item \code{rowSums(advector)}: AD matrix (or array) rowsums
+
+\item \code{colSums(adsparse)}: AD sparse matrix colsums
+
+\item \code{rowSums(adsparse)}: AD sparse matrix rowsums
 
 \item \code{cbind(advector)}: AD matrix column bind
 

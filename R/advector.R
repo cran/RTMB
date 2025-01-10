@@ -30,7 +30,7 @@ advector <- function(x) {
 ##'
 ##' - Numeric objects from \pkg{base}, such as `numeric()`, `matrix()`, `array()`, are converted to class \link{advector} with other attributes kept intact.
 ##' - Complex objects from \pkg{base}, such as `complex()`, are converted to class \link{adcomplex}.
-##' - Sparse matrices from \pkg{Matrix}, such as `Matrix()`, `Diagonal()`, are converted to `adsparse` which is essentially a `dgCMatrix` with \link{advector} x-slot.
+##' - Sparse matrices from \pkg{Matrix}, such as `Matrix()`, `Diagonal()`, are converted to \link{adsparse}.
 ##'
 ##' \code{AD} provides a reliable way to avoid problems with method dispatch when mixing operand types. For instance, sub assigning `x[i] <- y` may be problematic when `x` is numeric and `y` is `advector`. A prior statement `x <- AD(x)` solves potential method dispatch issues and can therefore be used as a reliable alternative to \link{ADoverload}.
 ##' @param x Object to be converted.
@@ -233,11 +233,32 @@ mean.advector <- function(x, ...) {
     if (length(list(...))) stop("AD mean only works for single argument")
     sum(x) / length(x)
 }
-##' @describeIn ADvector Equivalent of \link[base]{prod} except \code{na.rm} not allowed.
-prod.advector <- function(x, ..., na.rm) {
-  if (na.rm) stop("'na.rm=TRUE' not implemented for AD prod")
-  Reduce1(x, "*") * prod(...)
+##' @describeIn ADvector Equivalent of \link[base]{prod}.
+prod.advector <- function(x, ..., na.rm = FALSE) {
+    if (na.rm) {
+        x <- x[!is.na(x)]
+    }
+    Reduce1(x, "*") * prod(..., na.rm = na.rm)
 }
+##' @describeIn ADvector Equivalent of \link[base]{min}.
+min.advector <- function(..., na.rm = FALSE) {
+    x <- c(...)
+    if (na.rm) {
+        x <- x[!is.na(x)]
+    }
+    if (length(x) == 0) return (advector(Inf))
+    Reduce1(x, "min")
+}
+##' @describeIn ADvector Equivalent of \link[base]{min}.
+max.advector <- function(..., na.rm = FALSE) {
+    x <- c(...)
+    if (na.rm) {
+        x <- x[!is.na(x)]
+    }
+    if (length(x) == 0) return (advector(-Inf))
+    Reduce1(x, "max")
+}
+
 ## Make cov2cor() work. FIXME: Any unwanted side-effects with this?
 ##' @describeIn ADvector Makes \code{cov2cor()} work. FIXME: Any unwanted side-effects with this?
 is.numeric.advector <- function(x) TRUE
@@ -252,7 +273,7 @@ as.double.advector <- function(x, ...) {
 Complex.advector <- function(z) {
     callGeneric(adcomplex(z))
 }
-##' @describeIn ADvector Non differentiable \link{Summary} operations (e.g. \code{min} \code{max}) are not allowed and will throw an error.
+##' @describeIn ADvector Unimplemented \link{Summary} operations (currently \code{all} \code{any} \code{range}) will throw an error.
 Summary.advector <- function(..., na.rm = FALSE)
     stop("'advector' does not allow operation ", sQuote(.Generic))
 ## If an overload has issues we can patch it:
